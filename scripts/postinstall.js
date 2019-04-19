@@ -4,7 +4,7 @@ const appRoot = require('app-root-path').path
 
 const installCmi5Lib = async() => {
 	const libPath = path.join(
-		appRoot, 'node_modules', 'react-cmi5', 'lib', 'cmi5.js'
+		appRoot, 'node_modules', 'redux-cmi5', 'lib', 'cmi5.js'
 	)
 	try {
 		if(!await fs.exists(libPath)) {
