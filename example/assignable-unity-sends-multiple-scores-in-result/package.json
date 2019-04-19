@@ -4,9 +4,10 @@
   "private": true,
   "dependencies": {
     "react": "^16.8.6",
-    "react-cmi5": "../../react-cmi5-latest.tgz",
     "react-dom": "^16.8.6",
-    "react-scripts": "^2.1.8"
+    "react-scripts": "^2.1.8",
+    "redux": "^4.0.1",
+    "redux-cmi5": "../../redux-cmi5-latest.tgz"
   },
   "scripts": {
     "start": "react-scripts start",
