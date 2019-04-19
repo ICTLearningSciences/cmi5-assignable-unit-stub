@@ -1,4 +1,4 @@
-import Cmi5 from '.'
+import Cmi5 from './cmi5'
 
 import {
   COMPLETE_FAILED,
@@ -44,4 +44,4 @@ const reducer = (state = initialState, action) => {
 }
 
 
-export default reducer;
+export default reducer
