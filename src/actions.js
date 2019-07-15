@@ -137,17 +137,3 @@ export const terminate = () => (dispatch, getState) => {
     })
 }
 
-export default actions = {
-    COMPLETE_FAILED,
-    COMPLETE_REQUESTED,
-    COMPLETE_SUCCEEDED,
-    START_FAILED,
-    START_REQUESTED,
-    START_SUCCEEDED,
-    TERMINATE_FAILED,
-    TERMINATE_REQUESTED,
-    TERMINATE_SUCCEEDED,
-    start, 
-    completed, 
-    terminate
-}

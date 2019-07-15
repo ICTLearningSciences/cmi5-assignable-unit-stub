@@ -1,1 +1,137 @@
-module.exports=function(e){var t={};function r(n){if(t[n])return t[n].exports;var E=t[n]={i:n,l:!1,exports:{}};return e[n].call(E.exports,E,E.exports,r),E.l=!0,E.exports}return r.m=e,r.c=t,r.d=function(e,t,n){r.o(e,t)||Object.defineProperty(e,t,{enumerable:!0,get:n})},r.r=function(e){"undefined"!=typeof Symbol&&Symbol.toStringTag&&Object.defineProperty(e,Symbol.toStringTag,{value:"Module"}),Object.defineProperty(e,"__esModule",{value:!0})},r.t=function(e,t){if(1&t&&(e=r(e)),8&t)return e;if(4&t&&"object"==typeof e&&e&&e.__esModule)return e;var n=Object.create(null);if(r.r(n),Object.defineProperty(n,"default",{enumerable:!0,value:e}),2&t&&"string"!=typeof e)for(var E in e)r.d(n,E,function(t){return e[t]}.bind(null,E));return n},r.n=function(e){var t=e&&e.__esModule?function(){return e.default}:function(){return e};return r.d(t,"a",t),t},r.o=function(e,t){return Object.prototype.hasOwnProperty.call(e,t)},r.p="",r(r.s=0)}([function(e,t,r){"use strict";function n(e,t,r){return t in e?Object.defineProperty(e,t,{value:r,enumerable:!0,configurable:!0,writable:!0}):e[t]=r,e}function E(e,t){for(var r=0;r<t.length;r++){var n=t[r];n.enumerable=n.enumerable||!1,n.configurable=!0,"value"in n&&(n.writable=!0),Object.defineProperty(e,n.key,n)}}r.r(t);var o=window.Cmi5,T=null,u=null,c=function(){function e(){!function(e,t){if(!(e instanceof t))throw new TypeError("Cannot call a class as a function")}(this,e)}var t,r,c;return t=e,c=[{key:"getStatus",value:function(t){return t&&t[e.STATUS_PROP]||e.STATUS.NONE}},{key:"setStatus",value:function(t){var r=arguments.length>1&&void 0!==arguments[1]?arguments[1]:e.STATUS.NONE;return function(e){for(var t=1;t<arguments.length;t++){var r=null!=arguments[t]?arguments[t]:{},E=Object.keys(r);"function"==typeof Object.getOwnPropertySymbols&&(E=E.concat(Object.getOwnPropertySymbols(r).filter(function(e){return Object.getOwnPropertyDescriptor(r,e).enumerable}))),E.forEach(function(t){n(e,t,r[t])})}return e}({},t=t||{},n({},e.STATUS_PROP,r))}},{key:"create",value:function(t){return T=t,u=new o(e.url)}},{key:"STATUS",get:function(){return{NONE:0,START_IN_PROGRESS:1,STARTED:2,START_FAILED:3,COMPLETE_IN_PROGRESS:4,COMPLETED:5,COMPLETE_FAILED:6,TERMINATE_IN_PROGRESS:6,TERMINATED:7,TERMINATE_FAILED:8}}},{key:"STATUS_PROP",get:function(){return"cmi5_status"}},{key:"url",get:function(){return T||window.location.href},set:function(e){T=e}},{key:"instance",get:function(){if(u)return u;try{return e.create()}catch(e){return console.error(e),null}}}],(r=null)&&E(t.prototype,r),c&&E(t,c),e}(),a=actions={COMPLETE_FAILED:"CMI5_COMPLETE_FAILED",COMPLETE_REQUESTED:"CMI5_COMPLETE_REQUESTED",COMPLETE_SUCCEEDED:"CMI5_COMPLETE_SUCCEEDED",START_FAILED:"CMI5_START_FAILED",START_REQUESTED:"CMI5_START_REQUESTED",START_SUCCEEDED:"CMI5_START_SUCCEEDED",TERMINATE_FAILED:"CMI5_TERMINATE_FAILED",TERMINATE_REQUESTED:"CMI5_TERMINATE_REQUESTED",TERMINATE_SUCCEEDED:"CMI5_TERMINATE_SUCCEEDED",start:function(e){return function(t){t({type:"CMI5_START_REQUESTED"});try{c.create(e).start(function(e,r){if(e)return t({type:"CMI5_START_FAILED",error:e.message}),void console.error("CMI error: ".concat(e));t({type:"CMI5_START_SUCCEEDED"})})}catch(e){t({type:"CMI5_START_FAILED",error:e.message})}}},completed:function(e,t,r){return function(n,E){var o=c.getStatus(E());if(o===c.STATUS.STARTED||o===c.STATUS.COMPLETE_FAILED){var T=c.instance;if(T){n({type:"CMI5_COMPLETE_REQUESTED"});var u=function(e){if(e)return console.error("completion call failed with error:",e),void n({type:"CMI5_COMPLETE_FAILED",error:e.message});n({type:"CMI5_COMPLETE_SUCCEEDED"})};if(isNaN(Number(e)))return r=e,void T.completed(r,u);(t="boolean"==typeof t&&t)?T.failed(e,r,u):T.passed(e,r,u)}else console.error("complete called having no cmi instance (you need to call start action before complete)")}else console.error("complete called from invalid state (you need to call start action before complete and complete can be called only ONE time)",o)}},terminate:function(){return function(e,t){var r=c.getStatus(t());if(r===c.STATUS.COMPLETED||r===c.STATUS.TERMINATE_FAILED){var n=c.instance;n?(e({type:"CMI5_TERMINATE_REQUESTED"}),n.terminate(function(t){if(t)return console.error("completion call failed with error:",t),void e({type:"CMI5_TERMINATE_FAILED",error:t.message});e({type:"CMI5_TERMINATE_SUCCEEDED"})})):console.error("complete called having no cmi instance (you need to call start action before complete)")}else console.error("terminate called from invalid state",r)}}},i=c.setStatus({},c.STATUS.NONE),S=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:i,t=arguments.length>1?arguments[1]:void 0;if(!t)return e;switch(t.type){case"CMI5_START_REQUESTED":return c.setStatus(e,c.STATUS.START_IN_PROGRESS);case"CMI5_START_SUCCEEDED":return c.setStatus(e,c.STATUS.STARTED);case"CMI5_START_FAILED":return c.setStatus(e,c.STATUS.START_FAILED);case"CMI5_COMPLETE_REQUESTED":return c.setStatus(e,c.STATUS.COMPLETE_IN_PROGRESS);case"CMI5_COMPLETE_SUCCEEDED":return c.setStatus(e,c.STATUS.COMPLETED);case"CMI5_COMPLETE_FAILED":return c.setStatus(e,c.STATUS.COMPLETE_FAILED);case"CMI5_TERMINATE_REQUESTED":return c.setStatus(e,c.STATUS.TERMINATE_IN_PROGRESS);case"CMI5_TERMINATE_SUCCEEDED":return c.setStatus(e,c.STATUS.TERMINATED);case"CMI5_TERMINATE_FAILED":return c.setStatus(e,c.STATUS.TERMINATE_FAILED);default:return e}};r.d(t,"actions",function(){return a}),r.d(t,"reducer",function(){return S}),r.d(t,"Cmi5",function(){return c})}]);
+module.exports =
+/******/ (function(modules) { // webpackBootstrap
+/******/ 	// The module cache
+/******/ 	var installedModules = {};
+/******/
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/
+/******/ 		// Check if module is in cache
+/******/ 		if(installedModules[moduleId]) {
+/******/ 			return installedModules[moduleId].exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = installedModules[moduleId] = {
+/******/ 			i: moduleId,
+/******/ 			l: false,
+/******/ 			exports: {}
+/******/ 		};
+/******/
+/******/ 		// Execute the module function
+/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
+/******/
+/******/ 		// Flag the module as loaded
+/******/ 		module.l = true;
+/******/
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/
+/******/
+/******/ 	// expose the modules object (__webpack_modules__)
+/******/ 	__webpack_require__.m = modules;
+/******/
+/******/ 	// expose the module cache
+/******/ 	__webpack_require__.c = installedModules;
+/******/
+/******/ 	// define getter function for harmony exports
+/******/ 	__webpack_require__.d = function(exports, name, getter) {
+/******/ 		if(!__webpack_require__.o(exports, name)) {
+/******/ 			Object.defineProperty(exports, name, { enumerable: true, get: getter });
+/******/ 		}
+/******/ 	};
+/******/
+/******/ 	// define __esModule on exports
+/******/ 	__webpack_require__.r = function(exports) {
+/******/ 		if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 			Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 		}
+/******/ 		Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 	};
+/******/
+/******/ 	// create a fake namespace object
+/******/ 	// mode & 1: value is a module id, require it
+/******/ 	// mode & 2: merge all properties of value into the ns
+/******/ 	// mode & 4: return value when already ns object
+/******/ 	// mode & 8|1: behave like require
+/******/ 	__webpack_require__.t = function(value, mode) {
+/******/ 		if(mode & 1) value = __webpack_require__(value);
+/******/ 		if(mode & 8) return value;
+/******/ 		if((mode & 4) && typeof value === 'object' && value && value.__esModule) return value;
+/******/ 		var ns = Object.create(null);
+/******/ 		__webpack_require__.r(ns);
+/******/ 		Object.defineProperty(ns, 'default', { enumerable: true, value: value });
+/******/ 		if(mode & 2 && typeof value != 'string') for(var key in value) __webpack_require__.d(ns, key, function(key) { return value[key]; }.bind(null, key));
+/******/ 		return ns;
+/******/ 	};
+/******/
+/******/ 	// getDefaultExport function for compatibility with non-harmony modules
+/******/ 	__webpack_require__.n = function(module) {
+/******/ 		var getter = module && module.__esModule ?
+/******/ 			function getDefault() { return module['default']; } :
+/******/ 			function getModuleExports() { return module; };
+/******/ 		__webpack_require__.d(getter, 'a', getter);
+/******/ 		return getter;
+/******/ 	};
+/******/
+/******/ 	// Object.prototype.hasOwnProperty.call
+/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
+/******/
+/******/ 	// __webpack_public_path__
+/******/ 	__webpack_require__.p = "";
+/******/
+/******/
+/******/ 	// Load entry module and return exports
+/******/ 	return __webpack_require__(__webpack_require__.s = "./src/index.js");
+/******/ })
+/************************************************************************/
+/******/ ({
+
+/***/ "./src/actions.js":
+/*!************************!*\
+  !*** ./src/actions.js ***!
+  \************************/
+/*! exports provided: START_REQUESTED, START_SUCCEEDED, START_FAILED, COMPLETE_REQUESTED, COMPLETE_SUCCEEDED, COMPLETE_FAILED, TERMINATE_REQUESTED, TERMINATE_SUCCEEDED, TERMINATE_FAILED, start, completed, terminate */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"START_REQUESTED\", function() { return START_REQUESTED; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"START_SUCCEEDED\", function() { return START_SUCCEEDED; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"START_FAILED\", function() { return START_FAILED; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"COMPLETE_REQUESTED\", function() { return COMPLETE_REQUESTED; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"COMPLETE_SUCCEEDED\", function() { return COMPLETE_SUCCEEDED; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"COMPLETE_FAILED\", function() { return COMPLETE_FAILED; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"TERMINATE_REQUESTED\", function() { return TERMINATE_REQUESTED; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"TERMINATE_SUCCEEDED\", function() { return TERMINATE_SUCCEEDED; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"TERMINATE_FAILED\", function() { return TERMINATE_FAILED; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"start\", function() { return start; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"completed\", function() { return completed; });\n/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, \"terminate\", function() { return terminate; });\n/* harmony import */ var _cmi5__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./cmi5 */ \"./src/cmi5.js\");\n\nvar START_REQUESTED = \"CMI5_START_REQUESTED\";\nvar START_SUCCEEDED = \"CMI5_START_SUCCEEDED\";\nvar START_FAILED = \"CMI5_START_FAILED\";\nvar COMPLETE_REQUESTED = \"CMI5_COMPLETE_REQUESTED\";\nvar COMPLETE_SUCCEEDED = \"CMI5_COMPLETE_SUCCEEDED\";\nvar COMPLETE_FAILED = \"CMI5_COMPLETE_FAILED\";\nvar TERMINATE_REQUESTED = \"CMI5_TERMINATE_REQUESTED\";\nvar TERMINATE_SUCCEEDED = \"CMI5_TERMINATE_SUCCEEDED\";\nvar TERMINATE_FAILED = \"CMI5_TERMINATE_FAILED\";\n/**\n * As early  as possible you must initialize cmi5 by calling the start action.\n * No completion or termination can be called unless start has completed successfully.\n * Under the covers of start, the full cmi5 launch sequence is executed:\n * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch\n */\n\nvar start = function start(url) {\n  return function (dispatch) {\n    dispatch({\n      type: START_REQUESTED\n    });\n\n    try {\n      var cmi = _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].create(url);\n      cmi.start(function (startErr, result) {\n        if (startErr) {\n          dispatch({\n            type: START_FAILED,\n            error: startErr.message\n          });\n          console.error(\"CMI error: \".concat(startErr));\n          return;\n        }\n\n        dispatch({\n          type: START_SUCCEEDED\n        });\n      });\n    } catch (err) {\n      dispatch({\n        type: START_FAILED,\n        error: err.message\n      });\n    }\n  };\n};\n/**\n * In CMI5 protocol, one of complete/pass/failed should be called once (and only once).\n * This single 'completed' function will send a result with a completion verb as follows:\n *   - COMPLETED (https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#verbs_completed)\n *       If no `score` is passed\n *   - PASSED (https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#verbs_passed)\n *       If a `score` is passed and `failed` is *not* passed or anything other then `true\n *   - FAILED (https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#verbs_failed)\n *       If a `score` is passed and `failed` is `true`\n * (COMPLETED, PASSED, FAILED)\n * \n * @params {Number} [score] - the score for PASSED or FAILED or leave undefined for non-assessment resources\n * @params {Boolean} [failed] - pass `true` *only* with a failing score\n * @params {Object} [extensions] - a XAPI extensions object to pass with result \n *     (https://github.com/adlnet/xAPI-Spec/blob/master/xAPI-Data.md#result)\n */\n\nvar completed = function completed(score, failed, extensions) {\n  return function (dispatch, getState) {\n    var cmiStatus = _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].getStatus(getState());\n\n    if (cmiStatus !== _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].STATUS.STARTED && cmiStatus !== _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].STATUS.COMPLETE_FAILED) {\n      console.error('complete called from invalid state (you need to call start action before complete and complete can be called only ONE time)', cmiStatus);\n      return;\n    }\n\n    var cmi = _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].instance;\n\n    if (!cmi) {\n      /**\n       * the cmi instance will be null if initialization failed with an error\n       * e.g. because this web-app was launched using a url \n       * that didn't have cmi5's expected query params:\n       * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch\n       */\n      console.error('complete called having no cmi instance (you need to call start action before complete)');\n      return;\n    }\n\n    dispatch({\n      type: COMPLETE_REQUESTED\n    });\n\n    var onDone = function onDone(err) {\n      if (err) {\n        console.error('completion call failed with error:', err);\n        dispatch({\n          type: COMPLETE_FAILED,\n          error: err.message\n        });\n        return;\n      }\n\n      dispatch({\n        type: COMPLETE_SUCCEEDED\n      });\n    };\n\n    if (isNaN(Number(score))) {\n      /**\n       * if no score is passed, then we will complete with \n       * the COMPLETED verb (as opposed to PASSED or FAILED)\n       * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#verbs_completed\n       */\n      extensions = score;\n      cmi.completed(extensions, onDone);\n      return;\n    }\n    /**\n     * A score was passed, so we will complete with \n     * the either verb PASSED \n     * (https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#verbs_passed)\n     * or FAILED\n     * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#verbs_failed)\n     */\n\n\n    failed = typeof failed === 'boolean' ? failed : false;\n\n    if (failed) {\n      cmi.failed(score, extensions, onDone);\n    } else {\n      cmi.passed(score, extensions, onDone);\n    }\n  };\n};\n/**\n * In CMI5 protocol, a statement with verb TERMINATED \n * (https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#938-terminated) \n * should be called once (and only once) to end the session.\n */\n\nvar terminate = function terminate() {\n  return function (dispatch, getState) {\n    var cmiStatus = _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].getStatus(getState());\n\n    if (cmiStatus !== _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].STATUS.COMPLETED && cmiStatus !== _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].STATUS.TERMINATE_FAILED) {\n      console.error('terminate called from invalid state', cmiStatus);\n      return;\n    }\n\n    var cmi = _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].instance;\n\n    if (!cmi) {\n      /**\n       * the cmi instance will be null if initialization failed with an error\n       * e.g. because this web-app was launched using a url \n       * that didn't have cmi5's expected query params:\n       * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch\n       */\n      console.error('complete called having no cmi instance (you need to call start action before complete)');\n      return;\n    }\n\n    dispatch({\n      type: TERMINATE_REQUESTED\n    });\n    cmi.terminate(function (err) {\n      if (err) {\n        console.error('completion call failed with error:', err);\n        dispatch({\n          type: TERMINATE_FAILED,\n          error: err.message\n        });\n        return;\n      }\n\n      dispatch({\n        type: TERMINATE_SUCCEEDED\n      });\n    });\n  };\n};\n\n//# sourceURL=webpack:///./src/actions.js?");
+
+/***/ }),
+
+/***/ "./src/cmi5.js":
+/*!*********************!*\
+  !*** ./src/cmi5.js ***!
+  \*********************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\nfunction _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; var ownKeys = Object.keys(source); if (typeof Object.getOwnPropertySymbols === 'function') { ownKeys = ownKeys.concat(Object.getOwnPropertySymbols(source).filter(function (sym) { return Object.getOwnPropertyDescriptor(source, sym).enumerable; })); } ownKeys.forEach(function (key) { _defineProperty(target, key, source[key]); }); } return target; }\n\nfunction _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }\n\nfunction _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError(\"Cannot call a class as a function\"); } }\n\nfunction _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if (\"value\" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }\n\nfunction _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }\n\nvar _Cmi5 = typeof window !== 'undefined' ? window.Cmi5 : undefined;\n\nvar _url = null;\nvar _cmi = null;\n/**\n * Singleton wrapper for a cmi service.\n */\n\nvar Cmi5 =\n/*#__PURE__*/\nfunction () {\n  function Cmi5() {\n    _classCallCheck(this, Cmi5);\n  }\n\n  _createClass(Cmi5, null, [{\n    key: \"getStatus\",\n    value: function getStatus(state) {\n      return state ? state[Cmi5.STATUS_PROP] || Cmi5.STATUS.NONE : Cmi5.STATUS.NONE;\n    }\n  }, {\n    key: \"setStatus\",\n    value: function setStatus(state) {\n      var status = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : Cmi5.STATUS.NONE;\n      state = state || {};\n      return _objectSpread({}, state, _defineProperty({}, Cmi5.STATUS_PROP, status));\n    }\n  }, {\n    key: \"create\",\n    value: function create(url) {\n      _url = url;\n      _cmi = new _Cmi5(Cmi5.url);\n      return _cmi;\n    }\n  }, {\n    key: \"STATUS\",\n    get: function get() {\n      return {\n        NONE: 0,\n        START_IN_PROGRESS: 1,\n        STARTED: 2,\n        START_FAILED: 3,\n        COMPLETE_IN_PROGRESS: 4,\n        COMPLETED: 5,\n        COMPLETE_FAILED: 6,\n        TERMINATE_IN_PROGRESS: 6,\n        TERMINATED: 7,\n        TERMINATE_FAILED: 8\n      };\n    }\n  }, {\n    key: \"STATUS_PROP\",\n    get: function get() {\n      return \"cmi5_status\";\n    }\n  }, {\n    key: \"url\",\n    get: function get() {\n      return _url || typeof window !== 'undefined' ? window.location.href : null;\n    },\n    set: function set(value) {\n      _url = value;\n    }\n  }, {\n    key: \"instance\",\n    get: function get() {\n      if (_cmi) {\n        return _cmi;\n      }\n\n      try {\n        return Cmi5.create();\n      } catch (err) {\n        console.error(err);\n        return null;\n      }\n    }\n  }]);\n\n  return Cmi5;\n}();\n\n/* harmony default export */ __webpack_exports__[\"default\"] = (Cmi5);\n\n//# sourceURL=webpack:///./src/cmi5.js?");
+
+/***/ }),
+
+/***/ "./src/index.js":
+/*!**********************!*\
+  !*** ./src/index.js ***!
+  \**********************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+eval("__webpack_require__(/*! ./actions */ \"./src/actions.js\");\n\n__webpack_require__(/*! ./cmi5 */ \"./src/cmi5.js\");\n\n__webpack_require__(/*! ./reducers */ \"./src/reducers.js\");\n\n//# sourceURL=webpack:///./src/index.js?");
+
+/***/ }),
+
+/***/ "./src/reducers.js":
+/*!*************************!*\
+  !*** ./src/reducers.js ***!
+  \*************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _cmi5__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./cmi5 */ \"./src/cmi5.js\");\n/* harmony import */ var _actions__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./actions */ \"./src/actions.js\");\n\n\nvar initialState = _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].setStatus({}, _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].STATUS.NONE);\n\nvar reducer = function reducer() {\n  var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;\n  var action = arguments.length > 1 ? arguments[1] : undefined;\n\n  if (!action) {\n    return state;\n  }\n\n  switch (action.type) {\n    case _actions__WEBPACK_IMPORTED_MODULE_1__[\"START_REQUESTED\"]:\n      return _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].setStatus(state, _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].STATUS.START_IN_PROGRESS);\n\n    case _actions__WEBPACK_IMPORTED_MODULE_1__[\"START_SUCCEEDED\"]:\n      return _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].setStatus(state, _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].STATUS.STARTED);\n\n    case _actions__WEBPACK_IMPORTED_MODULE_1__[\"START_FAILED\"]:\n      return _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].setStatus(state, _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].STATUS.START_FAILED);\n\n    case _actions__WEBPACK_IMPORTED_MODULE_1__[\"COMPLETE_REQUESTED\"]:\n      return _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].setStatus(state, _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].STATUS.COMPLETE_IN_PROGRESS);\n\n    case _actions__WEBPACK_IMPORTED_MODULE_1__[\"COMPLETE_SUCCEEDED\"]:\n      return _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].setStatus(state, _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].STATUS.COMPLETED);\n\n    case _actions__WEBPACK_IMPORTED_MODULE_1__[\"COMPLETE_FAILED\"]:\n      return _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].setStatus(state, _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].STATUS.COMPLETE_FAILED);\n\n    case _actions__WEBPACK_IMPORTED_MODULE_1__[\"TERMINATE_REQUESTED\"]:\n      return _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].setStatus(state, _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].STATUS.TERMINATE_IN_PROGRESS);\n\n    case _actions__WEBPACK_IMPORTED_MODULE_1__[\"TERMINATE_SUCCEEDED\"]:\n      return _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].setStatus(state, _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].STATUS.TERMINATED);\n\n    case _actions__WEBPACK_IMPORTED_MODULE_1__[\"TERMINATE_FAILED\"]:\n      return _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].setStatus(state, _cmi5__WEBPACK_IMPORTED_MODULE_0__[\"default\"].STATUS.TERMINATE_FAILED);\n\n    default:\n      return state;\n  }\n};\n\n/* harmony default export */ __webpack_exports__[\"default\"] = (reducer);\n\n//# sourceURL=webpack:///./src/reducers.js?");
+
+/***/ })
+
+/******/ });

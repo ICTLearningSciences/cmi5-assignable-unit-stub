@@ -21,6 +21,7 @@
   },
   "keywords": [
     "react",
+    "redux",
     "javascript",
     "xapi",
     "cmi5"
@@ -32,8 +33,8 @@
   },
   "homepage": "https://github.com/beatthat/redux-cmi5#readme",
   "peerDependencies": {
-    "react": ">=15.0.1",
-    "react-dom": ">=15.0.1"
+    "react": ">=16.8.6",
+    "react-dom": ">=16.8.6"
   },
   "devDependencies": {
     "@babel/core": "^7.4.3",

@@ -1,4 +1,4 @@
-const _Cmi5 = window.Cmi5
+const _Cmi5 = (typeof(window) !== 'undefined')? window.Cmi5: undefined
 let _url = null
 let _cmi = null
 
@@ -49,7 +49,7 @@ class Cmi5 {
 
 
     static get url() {
-        return _url || window.location.href
+        return _url || (typeof(window) !== 'undefined')? window.location.href: null
     }
   
 
