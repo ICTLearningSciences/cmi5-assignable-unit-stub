@@ -10,31 +10,6 @@ export const TERMINATE_REQUESTED = "CMI5_TERMINATE_REQUESTED"
 export const TERMINATE_SUCCEEDED = "CMI5_TERMINATE_SUCCEEDED"
 export const TERMINATE_FAILED = "CMI5_TERMINATE_FAILED"
 
-
-/**
- * As early  as possible you must initialize cmi5 by calling the start action.
- * No completion or termination can be called unless start has completed successfully.
- * Under the covers of start, the full cmi5 launch sequence is executed:
- * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch
- */
-export const start = url => dispatch => {
-    dispatch({type: START_REQUESTED})
-    try {
-        const cmi = Cmi5.create(url)
-        cmi.start((startErr, result) => {
-            if(startErr) {
-                dispatch({type: START_FAILED, error: startErr.message})
-                console.error(`CMI error: ${startErr}`)
-                return
-            }
-            dispatch({type: START_SUCCEEDED})
-        })
-    }
-    catch(err) {
-        dispatch({type: START_FAILED, error: err.message})
-    }
-}
-
 /**
  * In CMI5 protocol, one of complete/pass/failed should be called once (and only once).
  * This single 'completed' function will send a result with a completion verb as follows:
@@ -103,6 +78,29 @@ export const completed = (score, failed, extensions) => (dispatch, getState) => 
     }
 }
 
+/**
+ * As early  as possible you must initialize cmi5 by calling the start action.
+ * No completion or termination can be called unless start has completed successfully.
+ * Under the covers of start, the full cmi5 launch sequence is executed:
+ * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch
+ */
+export const start = url => dispatch => {
+    dispatch({type: START_REQUESTED})
+    try {
+        const cmi = Cmi5.create(url)
+        cmi.start((startErr, result) => {
+            if(startErr) {
+                dispatch({type: START_FAILED, error: startErr.message})
+                console.error(`CMI error: ${startErr}`)
+                return
+            }
+            dispatch({type: START_SUCCEEDED})
+        })
+    }
+    catch(err) {
+        dispatch({type: START_FAILED, error: err.message})
+    }
+}
 
 /**
  * In CMI5 protocol, a statement with verb TERMINATED 
@@ -137,3 +135,17 @@ export const terminate = () => (dispatch, getState) => {
     })
 }
 
+export default {
+    COMPLETE_FAILED,
+    COMPLETE_REQUESTED,
+    COMPLETE_SUCCEEDED,
+    START_FAILED,
+    START_REQUESTED,
+    START_SUCCEEDED,
+    TERMINATE_FAILED,
+    TERMINATE_REQUESTED,
+    TERMINATE_SUCCEEDED,
+    completed,
+    start,
+    terminate
+}
