@@ -32,13 +32,22 @@ export const TERMINATE_FAILED = "CMI5_TERMINATE_FAILED"
  * @params {Object} [extensions] - a XAPI extensions object to pass with result
  *     (https://github.com/adlnet/xAPI-Spec/blob/master/xAPI-Data.md#result)
  * @params {Boolean} terminate - if TRUE, terminates the cmi5 session after
- *      submitting 'completed'
+ *      submitting 'completed'. Default is TRUE
+ * @params {Boolean} verbose - if TRUE, logs more events to console. Default is FALSE
  */
-export const completed = (score, failed, extensions, terminate = true) => (
+export const completed = ({
+    score, 
+    failed, 
+    extensions, 
+    terminate = true,
+    verbose = false
+} = {}) => (
     dispatch,
     getState
   ) => {
-    console.log('cmi5 sending COMPLETED and will follow with TERMINATE...');
+    if(verbose) {
+        console.log('cmi5 sending COMPLETED and will follow with TERMINATE...');
+    }
     const cmiStatus = Cmi5.getStatus(getState());
     if (
       cmiStatus !== Cmi5.STATUS.STARTED &&
@@ -72,7 +81,9 @@ export const completed = (score, failed, extensions, terminate = true) => (
         dispatch({ type: COMPLETE_SUCCEEDED });
       }
       if (!terminate) {
-        console.log('after COMPLETED, skipping TERMINATE...');
+        if(verbose) {
+            console.log('after COMPLETED, skipping TERMINATE...');
+        }
         return;
       }
       dispatch({ type: TERMINATE_REQUESTED });
