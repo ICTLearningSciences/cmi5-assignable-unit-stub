@@ -38,6 +38,7 @@ export const completed = (score, failed, extensions, terminate = true) => (
     dispatch,
     getState
   ) => {
+    console.log('cmi5 sending COMPLETED and will follow with TERMINATE...');
     const cmiStatus = Cmi5.getStatus(getState());
     if (
       cmiStatus !== Cmi5.STATUS.STARTED &&
@@ -71,6 +72,7 @@ export const completed = (score, failed, extensions, terminate = true) => (
         dispatch({ type: COMPLETE_SUCCEEDED });
       }
       if (!terminate) {
+        console.log('after COMPLETED, skipping TERMINATE...');
         return;
       }
       dispatch({ type: TERMINATE_REQUESTED });
