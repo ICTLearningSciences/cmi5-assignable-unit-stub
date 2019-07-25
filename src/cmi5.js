@@ -1,6 +1,10 @@
 let _url = null
 let _cmi = null
 
+function sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 /**
  * Singleton wrapper for a cmi service.
  */
@@ -39,12 +43,31 @@ class Cmi5 {
         }
     }
 
+    static _tryCreateWithTimeout(timeoutMs=20000, retryIntervalMs=250, timerMs=0) {
+        return new Promise((resolve, reject) => {
+            if(typeof(window) !== 'undefined' && typeof(window.Cmi5) === 'function') {
+                _cmi = new window.Cmi5(Cmi5.url)
+                return resolve(_cmi);
+            }
+            if(timerMs >= timeoutMs) {
+                return reject(`Cmi5 timeout: failed to create a Cmi5 instance in ${timeoutMs} (constructor not loaded on window)`);
+            }
+            sleep(retryIntervalMs)
+            .then(_ => Cmi5._tryCreateWithTimeout(
+                timeoutMs, retryIntervalMs, timerMs + retryIntervalMs
+            ))
+            .then(cmi => resolve(cmi))
+            .catch(err => reject(err))
+        });
+    }
 
     static create(url) {
-        _url = url
-        const _Cmi5 = (typeof(window) !== 'undefined')? window.Cmi5: undefined
-        _cmi = new _Cmi5(Cmi5.url)
-        return _cmi
+        _url = url || Cmi5.url;
+        const timeoutMs = 5000;
+        const retryIntervalMs = 250;
+        return this._tryCreateWithTimeout(
+            timeoutMs, retryIntervalMs, 0
+        )
     }
 
 

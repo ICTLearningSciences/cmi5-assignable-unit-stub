@@ -1,11 +1,14 @@
 import Cmi5 from './cmi5'
 
-export const START_REQUESTED = "CMI5_START_REQUESTED"
-export const START_SUCCEEDED = "CMI5_START_SUCCEEDED"
-export const START_FAILED = "CMI5_START_FAILED"
 export const COMPLETE_REQUESTED = "CMI5_COMPLETE_REQUESTED"
 export const COMPLETE_SUCCEEDED = "CMI5_COMPLETE_SUCCEEDED"
 export const COMPLETE_FAILED = "CMI5_COMPLETE_FAILED"
+export const START_REQUESTED = "CMI5_START_REQUESTED"
+export const START_SUCCEEDED = "CMI5_START_SUCCEEDED"
+export const START_FAILED = "CMI5_START_FAILED"
+export const SEND_STATEMENT_REQUESTED = "CMI5_SEND_STATEMENT_REQUESTED"
+export const SEND_STATEMENT_SUCCEEDED = "CMI5_SEND_STATEMENT_SUCCEEDED"
+export const SEND_STATEMENT_FAILED = "CMI5_SEND_STATEMENT_FAILED"
 export const TERMINATE_REQUESTED = "CMI5_TERMINATE_REQUESTED"
 export const TERMINATE_SUCCEEDED = "CMI5_TERMINATE_SUCCEEDED"
 export const TERMINATE_FAILED = "CMI5_TERMINATE_FAILED"
@@ -121,6 +124,36 @@ export const completed = ({
     }
   };
 
+
+export const sendStatement = xapiStatement => dispatch => {
+  console.warn(`redux-cmi5::sendStatement called with `, xapiStatement)
+  // const cmiStatus = Cmi5.getStatus(getState())
+  // if(cmiStatus !== Cmi5.STATUS.STARTED) {
+  //     console.error('Send statement called when status is not STARTED.', cmiStatus)
+  // }
+  // const cmi = Cmi5.instance
+  // if(!cmi) {
+  //     /**
+  //      * the cmi instance will be null if initialization failed with an error
+  //      * e.g. because this web-app was launched using a url 
+  //      * that didn't have cmi5's expected query params:
+  //      * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch
+  //      */
+  //     console.error('sendStatement called having no cmi instance (you need to call start action before sendStatement)')
+  //     return
+  // }
+  // dispatch({type: SEND_STATEMENT_REQUESTED})
+  // cmi.sendStatement(xapiStatement, (err) => {
+  //     if(err) {
+  //         console.error('sendStatement call failed with error:', err)
+  //         dispatch({type: SEND_STATEMENT_FAILED, error: err.message})
+  //         return
+  //     }
+  //     dispatch({type: SEND_STATEMENT_SUCCEEDED})
+  // })
+}
+
+
 /**
  * As early  as possible you must initialize cmi5 by calling the start action.
  * No completion or termination can be called unless start has completed successfully.
@@ -128,22 +161,23 @@ export const completed = ({
  * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch
  */
 export const start = url => dispatch => {
-    dispatch({type: START_REQUESTED})
-    try {
-        const cmi = Cmi5.create(url)
-        cmi.start((startErr, result) => {
-            if(startErr) {
-                dispatch({type: START_FAILED, error: startErr.message})
-                console.error(`CMI error: ${startErr}`)
-                return
-            }
-            dispatch({type: START_SUCCEEDED})
-        })
-    }
-    catch(err) {
-        dispatch({type: START_FAILED, error: err.message})
-    }
+  dispatch({type: START_REQUESTED})
+  Cmi5.create(url)
+  .then(cmi => {
+    cmi.start((startErr) => {
+      if(startErr) {
+          dispatch({type: START_FAILED, error: startErr.message})
+          console.error(`CMI error: ${startErr}`)
+          return
+      }
+      dispatch({type: START_SUCCEEDED})
+    })
+  })
+  .catch(err => {
+    dispatch({type: START_FAILED, error: err.message})
+  })
 }
+
 
 /**
  * In CMI5 protocol, a statement with verb TERMINATED 
@@ -188,6 +222,7 @@ export default {
     TERMINATE_REQUESTED,
     TERMINATE_SUCCEEDED,
     completed,
+    sendStatement,
     start,
     terminate
 }
