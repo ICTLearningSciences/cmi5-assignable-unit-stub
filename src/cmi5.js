@@ -1,4 +1,3 @@
-const _Cmi5 = (typeof(window) !== 'undefined')? window.Cmi5: undefined
 let _url = null
 let _cmi = null
 
@@ -43,6 +42,7 @@ class Cmi5 {
 
     static create(url) {
         _url = url
+        const _Cmi5 = (typeof(window) !== 'undefined')? window.Cmi5: undefined
         _cmi = new _Cmi5(Cmi5.url)
         return _cmi
     }
