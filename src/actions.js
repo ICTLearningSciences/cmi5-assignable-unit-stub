@@ -125,32 +125,34 @@ export const completed = ({
   };
 
 
-export const sendStatement = xapiStatement => dispatch => {
-  console.warn(`redux-cmi5::sendStatement called with `, xapiStatement)
-  // const cmiStatus = Cmi5.getStatus(getState())
-  // if(cmiStatus !== Cmi5.STATUS.STARTED) {
-  //     console.error('Send statement called when status is not STARTED.', cmiStatus)
-  // }
-  // const cmi = Cmi5.instance
-  // if(!cmi) {
-  //     /**
-  //      * the cmi instance will be null if initialization failed with an error
-  //      * e.g. because this web-app was launched using a url 
-  //      * that didn't have cmi5's expected query params:
-  //      * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch
-  //      */
-  //     console.error('sendStatement called having no cmi instance (you need to call start action before sendStatement)')
-  //     return
-  // }
-  // dispatch({type: SEND_STATEMENT_REQUESTED})
-  // cmi.sendStatement(xapiStatement, (err) => {
-  //     if(err) {
-  //         console.error('sendStatement call failed with error:', err)
-  //         dispatch({type: SEND_STATEMENT_FAILED, error: err.message})
-  //         return
-  //     }
-  //     dispatch({type: SEND_STATEMENT_SUCCEEDED})
-  // })
+export const sendStatement = ({
+  verb
+} = {}) => (dispatch, getState) => {
+  const cmiStatus = Cmi5.getStatus(getState())
+  if(cmiStatus !== Cmi5.STATUS.STARTED) {
+      console.error('Send statement called when status is not STARTED.', cmiStatus)
+  }
+  const cmi = Cmi5.instance
+  if(!cmi) {
+      /**
+       * the cmi instance will be null if initialization failed with an error
+       * e.g. because this web-app was launched using a url 
+       * that didn't have cmi5's expected query params:
+       * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch
+       */
+      console.error('sendStatement called having no cmi instance (you need to call start action before sendStatement)')
+      return
+  }
+  dispatch({type: SEND_STATEMENT_REQUESTED})
+  const st = cmi.prepareStatement(verb)
+  cmi.sendStatement(st, (err) => {
+      if(err) {
+          console.error('sendStatement call failed with error:', err)
+          dispatch({type: SEND_STATEMENT_FAILED, error: err.message})
+          return
+      }
+      dispatch({type: SEND_STATEMENT_SUCCEEDED})
+  })
 }
 
 
