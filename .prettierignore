@@ -1,0 +1,9 @@
+.cache
+.circleci
+.vscode
+node_modules
+public
+static
+build
+lib
+.venv
