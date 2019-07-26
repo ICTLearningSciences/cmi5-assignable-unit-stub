@@ -1,4 +1,4 @@
-import Cmi5 from './cmi5'
+import Cmi5 from './cmi5';
 
 import {
   COMPLETE_FAILED,
@@ -9,39 +9,37 @@ import {
   START_SUCCEEDED,
   TERMINATE_FAILED,
   TERMINATE_REQUESTED,
-  TERMINATE_SUCCEEDED
-} from "./actions";
+  TERMINATE_SUCCEEDED,
+} from './actions';
 
-const initialState = Cmi5.setStatus({}, Cmi5.STATUS.NONE)
-
+const initialState = Cmi5.setStatus({}, Cmi5.STATUS.NONE);
 
 const reducer = (state = initialState, action) => {
-  if(!action) {
-    return state
+  if (!action) {
+    return state;
   }
   switch (action.type) {
     case START_REQUESTED:
-      return Cmi5.setStatus(state, Cmi5.STATUS.START_IN_PROGRESS)
+      return Cmi5.setStatus(state, Cmi5.STATUS.START_IN_PROGRESS);
     case START_SUCCEEDED:
-      return Cmi5.setStatus(state, Cmi5.STATUS.STARTED)
+      return Cmi5.setStatus(state, Cmi5.STATUS.STARTED);
     case START_FAILED:
-      return Cmi5.setStatus(state, Cmi5.STATUS.START_FAILED)
+      return Cmi5.setStatus(state, Cmi5.STATUS.START_FAILED);
     case COMPLETE_REQUESTED:
-      return Cmi5.setStatus(state, Cmi5.STATUS.COMPLETE_IN_PROGRESS)
+      return Cmi5.setStatus(state, Cmi5.STATUS.COMPLETE_IN_PROGRESS);
     case COMPLETE_SUCCEEDED:
-        return Cmi5.setStatus(state, Cmi5.STATUS.COMPLETED)
+      return Cmi5.setStatus(state, Cmi5.STATUS.COMPLETED);
     case COMPLETE_FAILED:
-        return Cmi5.setStatus(state, Cmi5.STATUS.COMPLETE_FAILED)
+      return Cmi5.setStatus(state, Cmi5.STATUS.COMPLETE_FAILED);
     case TERMINATE_REQUESTED:
-        return Cmi5.setStatus(state, Cmi5.STATUS.TERMINATE_IN_PROGRESS)
+      return Cmi5.setStatus(state, Cmi5.STATUS.TERMINATE_IN_PROGRESS);
     case TERMINATE_SUCCEEDED:
-        return Cmi5.setStatus(state, Cmi5.STATUS.TERMINATED)
+      return Cmi5.setStatus(state, Cmi5.STATUS.TERMINATED);
     case TERMINATE_FAILED:
-        return Cmi5.setStatus(state, Cmi5.STATUS.TERMINATE_FAILED)
+      return Cmi5.setStatus(state, Cmi5.STATUS.TERMINATE_FAILED);
     default:
-      return state
+      return state;
   }
-}
-
+};
 
 export default reducer;

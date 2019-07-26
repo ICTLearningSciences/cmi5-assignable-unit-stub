@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import './App.css';
-import Cmi5AU from 'react-cmi5'
+import Cmi5AU from 'react-cmi5';
 import ExampleQuestion from './ExampleQuestion';
 
 class App extends Component {
@@ -8,10 +8,10 @@ class App extends Component {
     return (
       <div className="App">
         <Cmi5AU>
-          <ExampleQuestion/>
+          <ExampleQuestion />
         </Cmi5AU>
       </div>
-    )
+    );
   }
 }
 
