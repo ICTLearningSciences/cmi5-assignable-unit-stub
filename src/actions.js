@@ -127,6 +127,7 @@ export const sendStatement = ({
   verb,
   activityExtensions,
   contextExtensions,
+  result,
 } = {}) => (dispatch, getState) => {
   const cmiStatus = Cmi5.getStatus(getState());
   if (cmiStatus !== Cmi5.STATUS.STARTED) {
@@ -165,6 +166,10 @@ export const sendStatement = ({
     st.context.extensions = st.context.extensions
       ? { ...st.context.extensions, ...contextExtensions }
       : contextExtensions;
+  }
+  if (result) {
+    st.result =
+      result instanceof TinCan.Result ? result : new TinCan.Result(result);
   }
   cmi.sendStatement(st, err => {
     if (err) {

@@ -46,10 +46,10 @@ class Cmi5 {
    * Try to create an instance of the Cmi5 class downloaded from the script lib.
    * Since the lib may take some time to download, typically safer/easier
    * to wait and retry if the class is not yet set on `window.Cmi5`
-   * 
-   * @param {Number} timeoutMs 
-   * @param {Number} retryIntervalMs 
-   * @param {Number} timerMs 
+   *
+   * @param {Number} timeoutMs
+   * @param {Number} retryIntervalMs
+   * @param {Number} timerMs
    */
   static _tryCreateWithTimeout(
     timeoutMs = 20000,
@@ -83,15 +83,15 @@ class Cmi5 {
    * Create an instance of the Cmi5 class downloaded from the script lib.
    * Since the lib may take some time to download, typically safer/easier
    * to wait and retry if the class is not yet set on `window.Cmi5`
-   * 
+   *
    * If you want to use the return type, you need to extract it from the promise, e.g.
-   * 
+   *
    * `const cmi = await Cmi5.create(myUrl);`
-   * 
-   * or 
-   * 
+   *
+   * or
+   *
    * `Cmi5.create(myUrl).then(cmi => // do something w cmi obj)`
-   * 
+   *
    * @returns {Promise} that resolves an instance of (downloaded) Cmi5 class (which is not the same as this class)
    */
   static create(url) {
