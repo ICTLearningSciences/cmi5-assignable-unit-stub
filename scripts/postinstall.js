@@ -20,7 +20,10 @@ const installCmi5Lib = async () => {
       // The library install is for clients/projects that *use* react-cmi5
       return;
     }
-    const tgtPath = path.join(appRoot, 'public', 'cmi5.js');
+    const packagePath = path.join(appRoot, 'package.json')
+    const dependencies = ((await fs.exists(packagePath)) ? require(packagePath).dependencies: {}) || {}
+    const publicDir = 'gatsby' in dependencies ? 'static': 'public'
+    const tgtPath = path.join(appRoot, publicDir, 'cmi5.js');
     console.log(
       `react-cmi5 will attempt to install client lib from ${libPath} to ${tgtPath}...`
     );
