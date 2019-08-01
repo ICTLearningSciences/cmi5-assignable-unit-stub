@@ -24,6 +24,26 @@ class Cmi5 {
     };
   }
 
+  /**
+   * Cmi is only available if the required query params are on the url string
+   */
+  static get isCmiAvailable() {
+    if (Cmi5.instanceExists) {
+      return true;
+    }
+    if (!window || typeof window !== 'object') {
+      return false;
+    }
+    if (!window.location || typeof window.location.search !== 'string') {
+      return false;
+    }
+    const p = new URLSearchParams(window.location.search);
+    return Boolean(
+      // true if has all required cmi5 query params
+      p.get('fetch') && p.get('endpoint') && p.get('actor') && p.get('registration') && p.get('activityId')
+    );
+  }
+
   static get STATUS_PROP() {
     return 'cmi5_status';
   }
@@ -107,6 +127,10 @@ class Cmi5 {
 
   static set url(value) {
     _url = value;
+  }
+
+  static get instanceExists() {
+    return _cmi ? true : false;
   }
 
   static get instance() {

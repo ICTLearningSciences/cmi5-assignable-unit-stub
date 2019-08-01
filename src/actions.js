@@ -47,6 +47,9 @@ export const completed = ({
   terminate = true,
   verbose = false,
 } = {}) => (dispatch, getState) => {
+  if(!Cmi5.isCmiAvailable) {
+    return;
+  }
   if (verbose) {
     console.log('cmi5 sending COMPLETED and will follow with TERMINATE...');
   }
@@ -129,6 +132,9 @@ export const sendStatement = ({
   contextExtensions,
   result,
 } = {}) => (dispatch, getState) => {
+  if(!Cmi5.isCmiAvailable) {
+    return;
+  }
   const cmiStatus = Cmi5.getStatus(getState());
   if (cmiStatus !== Cmi5.STATUS.STARTED) {
     console.error(
@@ -188,6 +194,9 @@ export const sendStatement = ({
  * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch
  */
 export const start = url => dispatch => {
+  if(!Cmi5.isCmiAvailable) {
+    return;
+  }
   dispatch({ type: START_REQUESTED });
   Cmi5.create(url)
     .then(cmi => {
@@ -211,6 +220,9 @@ export const start = url => dispatch => {
  * should be called once (and only once) to end the session.
  */
 export const terminate = () => (dispatch, getState) => {
+  if(!Cmi5.isCmiAvailable) {
+    return;
+  }
   const cmiStatus = Cmi5.getStatus(getState());
   if (
     cmiStatus !== Cmi5.STATUS.COMPLETED &&
