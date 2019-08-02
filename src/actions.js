@@ -132,6 +132,7 @@ export const sendStatement = ({
   contextExtensions,
   result,
 } = {}) => (dispatch, getState) => {
+  console.log("CALLED sendStatement...")
   if(!Cmi5.isCmiAvailable) {
     return;
   }
@@ -141,6 +142,7 @@ export const sendStatement = ({
       'Send statement called when status is not STARTED.',
       cmiStatus
     );
+    return;
   }
   const cmi = Cmi5.instance;
   if (!cmi) {
