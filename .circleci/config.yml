@@ -1,0 +1,26 @@
+version: 2.1
+executors:
+  node:
+    docker:
+      - image: circleci/node:13.2
+jobs:
+  test-format:
+    executor: node
+    steps:
+      - checkout
+      - run:
+          name: Test format
+          command: make test-format
+  test-license:
+    executor: node
+    steps:
+      - checkout
+      - run:
+          name: Test license
+          command: make test-license
+workflows:
+  version: 2
+  test-and-deploy-dev:
+    jobs:
+      - test-format
+      - test-license
