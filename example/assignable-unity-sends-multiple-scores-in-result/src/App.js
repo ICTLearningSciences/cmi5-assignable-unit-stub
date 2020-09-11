@@ -9,17 +9,17 @@ Restrictions Notice/Marking: The Government's rights to use, modify, reproduce, 
 No Commercial Use: This software shall be used for government purposes only and shall not, without the express written permission of the party whose name appears in the restrictive legend, be used, modified, reproduced, released, performed, or displayed for any commercial purpose or disclosed to a person other than subcontractors, suppliers, or prospective subcontractors or suppliers, who require the software to submit offers for, or perform, government contracts.  Prior to disclosing the software, the Contractor shall require the persons to whom disclosure will be made to complete and sign the non-disclosure agreement at 227.7103-7.  (see DFARS 252.227-7025(b)(2))
 */
 import React, { Component } from "react";
-import "./App.css";
-import Cmi5AU from "react-cmi5";
+import { Provider as CmiProvider } from "react-cmi5-context";
 import ExampleQuestion from "./ExampleQuestion";
+import "./App.css";
 
 class App extends Component {
   render() {
     return (
       <div className="App">
-        <Cmi5AU>
+        <CmiProvider>
           <ExampleQuestion />
-        </Cmi5AU>
+        </CmiProvider>
       </div>
     );
   }

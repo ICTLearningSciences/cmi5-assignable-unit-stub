@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "react": "^16.8.6",
-    "react-cmi5": "../../react-cmi5-context-latest.tgz",
+    "react-cmi5-context": "../../react-cmi5-context-latest.tgz",
     "react-dom": "^16.8.6",
     "react-scripts": "^2.1.8"
   },

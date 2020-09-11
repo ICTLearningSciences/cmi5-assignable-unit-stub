@@ -10,7 +10,7 @@ No Commercial Use: This software shall be used for government purposes only and 
 */
 import React, { Component } from "react";
 import "./App.css";
-import Cmi5AU from "react-cmi5";
+import Cmi5AU from "react-cmi5-context";
 import ExampleQuestion from "./ExampleQuestion";
 
 class App extends Component {

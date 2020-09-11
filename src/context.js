@@ -11,7 +11,7 @@ No Commercial Use: This software shall be used for government purposes only and 
 import React from "react";
 import Cmi5 from "./cmi5";
 
-const Context = React.createContext({
+export const Context = React.createContext({
   cmi5_status: Cmi5.STATUS.NONE,
   completed: (
     score,

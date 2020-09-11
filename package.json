@@ -21,7 +21,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/beatthat/react-cmi5-context.git"
+    "url": "git+https://github.com/ICTLearningSciences/react-cmi5-context.git"
   },
   "keywords": [
     "react",
@@ -33,21 +33,21 @@
   "author": "larrykirschner@gmail.com",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/beatthat/react-cmi5-context/issues"
+    "url": "https://github.com/ICTLearningSciences/react-cmi5-context/issues"
   },
-  "homepage": "https://github.com/beatthat/react-cmi5-context#readme",
+  "homepage": "https://github.com/ICTLearningSciences/react-cmi5-context#readme",
   "peerDependencies": {
     "react": ">=16.8.6",
     "react-dom": ">=16.8.6"
   },
   "devDependencies": {
-    "@babel/core": "^7.4.3",
+    "@babel/core": "^7.11.6",
     "@babel/plugin-proposal-object-rest-spread": "^7.4.3",
-    "@babel/preset-env": "^7.4.3",
-    "@babel/preset-react": "^7.0.0",
+    "@babel/preset-env": "^7.11.5",
+    "@babel/preset-react": "^7.10.4",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
-    "babel-loader": "^8.0.5",
+    "babel-loader": "^8.1.0",
     "babel-plugin-transform-object-rest-spread": "^6.26.0",
     "babel-plugin-transform-react-jsx": "^6.24.1",
     "license-check-and-add": "^3.0.4",

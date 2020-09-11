@@ -9,6 +9,7 @@ Restrictions Notice/Marking: The Government's rights to use, modify, reproduce, 
 No Commercial Use: This software shall be used for government purposes only and shall not, without the express written permission of the party whose name appears in the restrictive legend, be used, modified, reproduced, released, performed, or displayed for any commercial purpose or disclosed to a person other than subcontractors, suppliers, or prospective subcontractors or suppliers, who require the software to submit offers for, or perform, government contracts.  Prior to disclosing the software, the Contractor shall require the persons to whom disclosure will be made to complete and sign the non-disclosure agreement at 227.7103-7.  (see DFARS 252.227-7025(b)(2))
 */
 import React, { Component } from "react";
+import { Context as CmiContext } from "react-cmi5-context";
 
 /**
  * An example question that can be wrapped as a child of Cmi5AssignableUnit.
@@ -17,6 +18,8 @@ import React, { Component } from "react";
  * 'passed' and 'failed', which the question can use to submit results.
  */
 export default class ExampleQuestion extends Component {
+  static contextType = CmiContext;
+
   constructor(props) {
     super(props);
     this.state = {
@@ -44,10 +47,10 @@ export default class ExampleQuestion extends Component {
   }
 
   render() {
-    // props includes special actions for passed({score:1.0}) and failed({score: 0.0 })
+    // context includes special actions for passed({score:1.0}) and failed({score: 0.0 })
     // These are wrappers for cmi.passed and cmi.failed
     // that make sure cmi has initialized before score is actually sent
-    const { passed, failed, terminate } = this.props;
+    const { completed, terminate } = this.context;
 
     const onSubmit = () => {
       // just make the score the avg of all the knowledge-component scores
@@ -71,9 +74,9 @@ export default class ExampleQuestion extends Component {
         }, [])
       };
       if (score > 0) {
-        passed(score, extensions);
+        completed(score, false, extensions);
       } else {
-        failed(score, extensions);
+        completed(score, true, extensions);
       }
 
       terminate();
@@ -117,3 +120,4 @@ export default class ExampleQuestion extends Component {
     );
   }
 }
+ExampleQuestion.contextType = CmiContext;
