@@ -175,7 +175,7 @@ export const Provider = ({ children }) => {
         ...curDefinition,
         extensions: curDefinition.extensions
           ? { ...curDefinition.extensions, ...activityExtensions }
-          : activityExtensions
+          : activityExtensions,
       });
     }
     if (contextExtensions) {
@@ -271,7 +271,7 @@ export const Provider = ({ children }) => {
         completed,
         sendStatement,
         start,
-        terminate
+        terminate,
       }}
     >
       {children}

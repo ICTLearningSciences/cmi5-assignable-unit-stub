@@ -2,6 +2,12 @@ SHELL:=/bin/bash
 DOCKER_ACCOUNT?=uscictdocker
 DOCKER_IMAGE?=uscictdocker/react-cmi5-context
 
+clean:
+	rm -rf node_modules build *.tgz
+
+build:
+	npm ci && npm run pack-latest
+
 node_modules/prettier:
 	npm install
 
@@ -12,6 +18,9 @@ format: node_modules/prettier
 .PHONY: format
 test-format: node_modules/prettier
 	npm run test:format
+
+node_modules/license-check-and-add:
+	npm ci
 
 LICENSE:
 	@echo "you must have a LICENSE file" 1>&2
@@ -24,6 +33,3 @@ license: LICENSE node_modules/license-check-and-add
 .PHONY: test-license
 test-license: LICENSE node_modules/license-check-and-add
 	npm run test:license
-
-node_modules/license-check-and-add:
-	npm ci

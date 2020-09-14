@@ -22,7 +22,7 @@ export const Context = React.createContext({
   ) => {},
   sendStatement: (verb, activityExtensions, contextExtensions, result) => {},
   start: start => {},
-  terminate: () => {}
+  terminate: () => {},
 });
 
 export default Context;

@@ -30,7 +30,7 @@ class Cmi5 {
       COMPLETE_FAILED: 6,
       TERMINATE_IN_PROGRESS: 6,
       TERMINATED: 7,
-      TERMINATE_FAILED: 8
+      TERMINATE_FAILED: 8,
     };
   }
 

@@ -1,3 +1,0 @@
-# in the example, exclude cmi5.js because it gets installed by npm
-# in your real app, you need to deploy this if you're serving the file
-cmi5.js
