@@ -21,7 +21,7 @@
     "gatsby-plugin-material-ui": "^2.1.10",
     "gatsby-plugin-typescript": "^2.4.19",
     "react": "^16.12.0",
-    "react-cmi5-context": "../../react-cmi5-context-latest.tgz",
+    "react-cmi5-context": "git+https://github.com/ICTLearningSciences/react-cmi5-context.git#semver:^2.0.0-alpha.1",
     "react-dom": "^16.12.0"
   },
   "devDependencies": {

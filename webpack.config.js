@@ -4,7 +4,7 @@ module.exports = {
   mode: "development",
   entry: "./src/index.js",
   output: {
-    path: path.resolve(__dirname, "build"),
+    path: path.resolve(__dirname, "dist"),
     filename: "index.js",
     libraryTarget: "commonjs", // THIS IS THE MOST IMPORTANT LINE! :mindblow: I wasted more than 2 days until realize this was the line most important in all this guide.
   },
@@ -13,7 +13,7 @@ module.exports = {
       {
         test: /\.js$/,
         include: path.resolve(__dirname, "src"),
-        exclude: /(node_modules|bower_components|build)/,
+        exclude: /(node_modules|bower_components|dist)/,
         use: {
           loader: "babel-loader",
           options: {
