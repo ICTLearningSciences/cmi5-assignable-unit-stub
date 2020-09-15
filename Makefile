@@ -6,7 +6,7 @@ clean:
 	rm -rf node_modules dist *.tgz
 
 build:
-	npm ci && npm run pack-latest
+	npm ci && npm run pack:latest
 
 node_modules/prettier:
 	npm install

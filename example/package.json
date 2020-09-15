@@ -6,25 +6,28 @@
   "license": "0BSD",
   "scripts": {
     "build": "gatsby build",
+    "clean": "gatsby clean",
+    "deps:update": "npx ncu -u",
     "develop": "gatsby develop",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
-    "start": "npm run develop",
+    "preinstall": "cd .. && npm run pack:latest"
     "serve": "gatsby serve",
-    "clean": "gatsby clean",
+    "start": "npm run develop",
     "test": "echo \"Write tests! -> https://gatsby.dev/unit-testing\" && exit 1"
   },
   "dependencies": {
     "@material-ui/core": "^4.11.0",
     "@material-ui/icons": "^4.9.1",
-    "gatsby": "^2.24.54",
+    "gatsby": "^2.24.58",
     "gatsby-plugin-manifest": "^2.4.28",
     "gatsby-plugin-material-ui": "^2.1.10",
     "gatsby-plugin-typescript": "^2.4.19",
-    "react": "^16.12.0",
-    "react-cmi5-context": "git+https://github.com/ICTLearningSciences/react-cmi5-context.git#semver:^2.0.0-alpha.1",
-    "react-dom": "^16.12.0"
+    "react": "^16.13.1",
+    "react-cmi5-context": "",
+    "react-dom": "^16.13.1"
   },
   "devDependencies": {
+    "npm-check-updates": "^9.0.1",
     "prettier": "2.1.1"
   },
   "repository": {
