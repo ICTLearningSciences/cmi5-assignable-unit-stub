@@ -22,10 +22,10 @@ import { Result, Extensions } from "@gradiant/xapi-dsl";
 import React from "react";
 import TinCan from "tincanjs";
 import { Context as CmiContext } from "./context";
-import Cmi5 from "./cmi5";
+import Cmi5, {Cmi5Status, } from "./cmi5";
 
 export const Provider = ({ children }) => {
-  const [status, setStatus] = React.useState(Cmi5.STATUS.NONE);
+  const [status, setStatus] = React.useState(Cmi5Status.NONE);
 
   /**
    * Mark the lesson as completed with a score (or no score if non assement),
@@ -66,8 +66,8 @@ export const Provider = ({ children }) => {
       console.log("cmi5 sending COMPLETED and will follow with TERMINATE...");
     }
     if (
-      status !== Cmi5.STATUS.STARTED &&
-      status !== Cmi5.STATUS.COMPLETE_FAILED
+      status !== Cmi5Status.STARTED &&
+      status !== Cmi5Status.COMPLETE_FAILED
     ) {
       console.error(
         "complete called from invalid state (you need to call start action before complete and complete can be called only ONE time)",
@@ -89,13 +89,13 @@ export const Provider = ({ children }) => {
         );
         return;
       }
-      setStatus(Cmi5.STATUS.COMPLETE_IN_PROGRESS);
+      setStatus(Cmi5Status.COMPLETE_IN_PROGRESS);
       const onCompleteCallback = (err) => {
         if (err) {
           console.error("completion call failed with error:", err);
-          setStatus(Cmi5.STATUS.COMPLETE_FAILED);
+          setStatus(Cmi5Status.COMPLETE_FAILED);
         } else {
-          setStatus(Cmi5.STATUS.COMPLETED);
+          setStatus(Cmi5Status.COMPLETED);
         }
         if (!terminate) {
           if (verbose) {
@@ -103,14 +103,14 @@ export const Provider = ({ children }) => {
           }
           return;
         }
-        setStatus(Cmi5.STATUS.TERMINATE_IN_PROGRESS);
+        setStatus(Cmi5Status.TERMINATE_IN_PROGRESS);
         cmi.terminate((err) => {
           if (err) {
             console.error("completion call failed with error:", err);
-            setStatus(Cmi5.STATUS.TERMINATE_FAILED);
+            setStatus(Cmi5Status.TERMINATE_FAILED);
             return;
           }
-          setStatus(Cmi5.STATUS.TERMINATED);
+          setStatus(Cmi5Status.TERMINATED);
         });
       };
       if (isNaN(Number(score))) {
@@ -151,7 +151,7 @@ export const Provider = ({ children }) => {
     if (!Cmi5.isCmiAvailable) {
       return;
     }
-    if (status !== Cmi5.STATUS.STARTED) {
+    if (status !== Cmi5Status.STARTED) {
       console.error(
         "Send statement called when status is not STARTED.",
         status
@@ -218,20 +218,20 @@ export const Provider = ({ children }) => {
     if (!Cmi5.isCmiAvailable) {
       return;
     }
-    setStatus(Cmi5.STATUS.START_IN_PROGRESS);
+    setStatus(Cmi5Status.START_IN_PROGRESS);
     Cmi5.create(url)
       .then((cmi) => {
         cmi.start((startErr) => {
           if (startErr) {
-            setStatus(Cmi5.STATUS.START_FAILED);
+            setStatus(Cmi5Status.START_FAILED);
             console.error(`CMI error: ${startErr}`);
             return;
           }
-          setStatus(Cmi5.STATUS.STARTED);
+          setStatus(Cmi5Status.STARTED);
         });
       })
       .catch((err) => {
-        setStatus(Cmi5.STATUS.START_FAILED);
+        setStatus(Cmi5Status.START_FAILED);
       });
   };
 
@@ -245,8 +245,8 @@ export const Provider = ({ children }) => {
       return;
     }
     if (
-      status !== Cmi5.STATUS.COMPLETED &&
-      status !== Cmi5.STATUS.TERMINATE_FAILED
+      status !== Cmi5Status.COMPLETED &&
+      status !== Cmi5Status.TERMINATE_FAILED
     ) {
       console.error(
         'Terminate called when status is not COMPLETED. Generally safer to use "completeAndTerminate" action',
@@ -267,14 +267,14 @@ export const Provider = ({ children }) => {
         );
         return;
       }
-      setStatus(Cmi5.STATUS.TERMINATE_IN_PROGRESS);
+      setStatus(Cmi5Status.TERMINATE_IN_PROGRESS);
       cmi.terminate((err) => {
         if (err) {
           console.error("completion call failed with error:", err);
-          setStatus(Cmi5.STATUS.TERMINATE_FAILED);
+          setStatus(Cmi5Status.TERMINATE_FAILED);
           return;
         }
-        setStatus(Cmi5.STATUS.TERMINATED);
+        setStatus(Cmi5Status.TERMINATED);
       });
     } catch (err) {
       console.error(err);
@@ -284,7 +284,7 @@ export const Provider = ({ children }) => {
   return (
     <CmiContext.Provider
       value={{
-        cmi5_status: status,
+        cmiStatus: status,
         completed,
         sendStatement,
         start,

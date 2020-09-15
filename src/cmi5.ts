@@ -21,7 +21,7 @@ interface CallbackFunc<T> {
   (err: Error | null, result?: T): void;
 }
 
-interface PartialStatement {
+export interface HasVerb {
   verb: Verb;
 }
 
@@ -29,31 +29,29 @@ interface Cmi5Spi {
   completed: (extensions: any, cb: CallbackFunc<void>) => void;
   failed: (score: number, extensions: any, cb: CallbackFunc<void>) => void;
   passed: (score: number, extensions: any, cb: CallbackFunc<void>) => void;
-  prepareStatement: (st: PartialStatement) => Statement;
+  prepareStatement: (st: HasVerb) => Statement;
   sendStatement: (st: Statement, cb: CallbackFunc<void>) => void;
   start: (cb: CallbackFunc<void>) => void;
   terminate: (cb: CallbackFunc<void>) => void;
+}
+
+export enum Cmi5Status {
+  NONE = 0,
+  START_IN_PROGRESS,
+  STARTED,
+  START_FAILED,
+  COMPLETE_IN_PROGRESS,
+  COMPLETED,
+  COMPLETE_FAILED,
+  TERMINATE_IN_PROGRESS,
+  TERMINATED,
+  TERMINATE_FAILED,
 }
 
 /**
  * Singleton wrapper for a cmi service.
  */
 class Cmi5 {
-  static get STATUS() {
-    return {
-      NONE: 0,
-      START_IN_PROGRESS: 1,
-      STARTED: 2,
-      START_FAILED: 3,
-      COMPLETE_IN_PROGRESS: 4,
-      COMPLETED: 5,
-      COMPLETE_FAILED: 6,
-      TERMINATE_IN_PROGRESS: 6,
-      TERMINATED: 7,
-      TERMINATE_FAILED: 8,
-    };
-  }
-
   /**
    * Cmi is only available if the required query params are on the url string
    */
@@ -133,7 +131,7 @@ class Cmi5 {
    *
    * @returns {Promise} that resolves an instance of (downloaded) Cmi5 class (which is not the same as this class)
    */
-  static create(url = ''): Promise<Cmi5Spi> {
+  static create(url = ""): Promise<Cmi5Spi> {
     _url = url || Cmi5.url;
     const timeoutMs = 5000;
     const retryIntervalMs = 250;

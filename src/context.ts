@@ -8,11 +8,30 @@ Restrictions Notice/Marking: The Government's rights to use, modify, reproduce, 
 
 No Commercial Use: This software shall be used for government purposes only and shall not, without the express written permission of the party whose name appears in the restrictive legend, be used, modified, reproduced, released, performed, or displayed for any commercial purpose or disclosed to a person other than subcontractors, suppliers, or prospective subcontractors or suppliers, who require the software to submit offers for, or perform, government contracts.  Prior to disclosing the software, the Contractor shall require the persons to whom disclosure will be made to complete and sign the non-disclosure agreement at 227.7103-7.  (see DFARS 252.227-7025(b)(2))
 */
+import { Extensions, Result } from "@gradiant/xapi-dsl";
 import React from "react";
-import Cmi5 from "./cmi5";
+import { Cmi5Status, HasVerb } from "./cmi5";
 
-export const Context = React.createContext({
-  cmi5_status: Cmi5.STATUS.NONE,
+export interface ICmi5Context {
+  cmiStatus: Cmi5Status;
+  completed: (
+    score: number,
+    failed: boolean,
+    extensions: any,
+    terminate?: boolean,
+    verbose?: boolean
+  ) => Promise<void>;
+  sendStatement: (
+    verb: HasVerb | string,
+    activityExtensions?: Extensions,
+    contextExtensions?: Extensions,
+    result?: Result
+  ) => {};
+  start: () => Promise<void>;
+  terminate: () => Promise<void>;
+}
+export const Context = React.createContext<ICmi5Context>({
+  cmiStatus: Cmi5Status.NONE,
   completed: (
     score,
     failed,
@@ -21,7 +40,7 @@ export const Context = React.createContext({
     verbose = false
   ) => {},
   sendStatement: (verb, activityExtensions, contextExtensions, result) => {},
-  start: start => {},
+  start: (start) => {},
   terminate: () => {},
 });
 
