@@ -19,10 +19,10 @@ Restrictions Notice/Marking: The Government's rights to use, modify, reproduce, 
 No Commercial Use: This software shall be used for government purposes only and shall not, without the express written permission of the party whose name appears in the restrictive legend, be used, modified, reproduced, released, performed, or displayed for any commercial purpose or disclosed to a person other than subcontractors, suppliers, or prospective subcontractors or suppliers, who require the software to submit offers for, or perform, government contracts.  Prior to disclosing the software, the Contractor shall require the persons to whom disclosure will be made to complete and sign the non-disclosure agreement at 227.7103-7.  (see DFARS 252.227-7025(b)(2))
 */
 import { Result, Extensions } from "@gradiant/xapi-dsl";
-import React from "react";
+import React, { useEffect } from "react";
 import TinCan from "tincanjs";
 import { Context as CmiContext } from "./context";
-import Cmi5, {Cmi5Status, } from "./cmi5";
+import Cmi5, { Cmi5Status } from "./cmi5";
 
 export const Provider = ({ children }) => {
   const [status, setStatus] = React.useState(Cmi5Status.NONE);
@@ -89,13 +89,13 @@ export const Provider = ({ children }) => {
         );
         return;
       }
-      setStatus(Cmi5Status.COMPLETE_IN_PROGRESS);
+      setStatus(status => Cmi5Status.COMPLETE_IN_PROGRESS);
       const onCompleteCallback = (err) => {
         if (err) {
           console.error("completion call failed with error:", err);
-          setStatus(Cmi5Status.COMPLETE_FAILED);
+          setStatus(status => Cmi5Status.COMPLETE_FAILED);
         } else {
-          setStatus(Cmi5Status.COMPLETED);
+          setStatus(status => Cmi5Status.COMPLETED);
         }
         if (!terminate) {
           if (verbose) {
@@ -103,14 +103,14 @@ export const Provider = ({ children }) => {
           }
           return;
         }
-        setStatus(Cmi5Status.TERMINATE_IN_PROGRESS);
+        setStatus(status => Cmi5Status.TERMINATE_IN_PROGRESS);
         cmi.terminate((err) => {
           if (err) {
             console.error("completion call failed with error:", err);
-            setStatus(Cmi5Status.TERMINATE_FAILED);
+            setStatus(status => Cmi5Status.TERMINATE_FAILED);
             return;
           }
-          setStatus(Cmi5Status.TERMINATED);
+          setStatus(status => Cmi5Status.TERMINATED);
         });
       };
       if (isNaN(Number(score))) {
@@ -214,26 +214,26 @@ export const Provider = ({ children }) => {
    * Under the covers of start, the full cmi5 launch sequence is executed:
    * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch
    */
-  const start = (url) => {
+  async function start(url = "") {
     if (!Cmi5.isCmiAvailable) {
       return;
     }
-    setStatus(Cmi5Status.START_IN_PROGRESS);
+    setStatus(status => Cmi5Status.START_IN_PROGRESS);
     Cmi5.create(url)
       .then((cmi) => {
         cmi.start((startErr) => {
           if (startErr) {
-            setStatus(Cmi5Status.START_FAILED);
+            setStatus(status => Cmi5Status.START_FAILED);
             console.error(`CMI error: ${startErr}`);
             return;
           }
-          setStatus(Cmi5Status.STARTED);
+          setStatus(status => Cmi5Status.STARTED);
         });
       })
       .catch((err) => {
-        setStatus(Cmi5Status.START_FAILED);
+        setStatus(status => Cmi5Status.START_FAILED);
       });
-  };
+  }
 
   /**
    * In CMI5 protocol, a statement with verb TERMINATED
@@ -267,20 +267,22 @@ export const Provider = ({ children }) => {
         );
         return;
       }
-      setStatus(Cmi5Status.TERMINATE_IN_PROGRESS);
+      setStatus(status => Cmi5Status.TERMINATE_IN_PROGRESS);
       cmi.terminate((err) => {
         if (err) {
           console.error("completion call failed with error:", err);
-          setStatus(Cmi5Status.TERMINATE_FAILED);
+          setStatus(status => Cmi5Status.TERMINATE_FAILED);
           return;
         }
-        setStatus(Cmi5Status.TERMINATED);
+        setStatus(status => Cmi5Status.TERMINATED);
       });
     } catch (err) {
       console.error(err);
     }
   }
-
+  if(Cmi5.isCmiAvailable && status === Cmi5Status.NONE) {
+    start();
+  }
   return (
     <CmiContext.Provider
       value={{
