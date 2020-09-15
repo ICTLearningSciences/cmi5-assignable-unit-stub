@@ -7,18 +7,18 @@
     "access": "public"
   },
   "scripts": {
+    "clean": "rm -rf node_modules *.tgz",
     "deps:update": "npx ncu -u",
-    "postinstall": "node ./scripts/postinstall.js",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "webpack --watch",
     "build": "webpack --config webpack.config.js",
     "pack:latest": "npm run build && npm pack && cp ${npm_package_name}-${npm_package_version}.tgz ${npm_package_name}-latest.tgz",
+    "postinstall": "node ./scripts/postinstall.js",
     "postversion": "git push && git push --tags",
-    "clean": "rm -rf node_modules package-lock.json yarn.lock *.tgz",
-    "test:format": "prettier --check '**/*.{js,jsx,json}'",
     "format": "prettier --write '**/*.{js,jsx,json}'",
     "license:fix": "license-check-and-add remove -f license-config.json && license-check-and-add add -f license-config.json",
-    "test:license": "license-check-and-add check -f license-config.json"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "test:format": "prettier --check '**/*.{js,jsx,json}'",
+    "test:license": "license-check-and-add check -f license-config.json",
+    "test:types": "tsc --noemit"
   },
   "repository": {
     "type": "git",
@@ -46,6 +46,8 @@
     "@babel/preset-env": "^7.11.5",
     "@babel/preset-es2015": "^7.0.0-beta.53",
     "@babel/preset-react": "^7.10.4",
+    "@rollup/plugin-commonjs": "^15.0.0",
+    "@rollup/plugin-node-resolve": "^9.0.0",
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.3",
     "babel-eslint": "^10.1.0",
@@ -57,10 +59,15 @@
     "prettier": "^2.1.1",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
+    "rollup": "^2.26.11",
+    "rollup-plugin-peer-deps-external": "^2.2.3",
+    "rollup-plugin-typescript2": "^0.27.2",
+    "typescript": "^4.0.2",
     "webpack": "^4.44.1",
     "webpack-cli": "^3.3.12"
   },
   "dependencies": {
+    "@gradiant/xapi-dsl": "^1.10.0",
     "app-root-path": "^3.0.0",
     "fs-extra": "^9.0.1",
     "postinstall": "^0.7.0",

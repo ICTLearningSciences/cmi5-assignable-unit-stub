@@ -8,11 +8,31 @@ Restrictions Notice/Marking: The Government's rights to use, modify, reproduce, 
 
 No Commercial Use: This software shall be used for government purposes only and shall not, without the express written permission of the party whose name appears in the restrictive legend, be used, modified, reproduced, released, performed, or displayed for any commercial purpose or disclosed to a person other than subcontractors, suppliers, or prospective subcontractors or suppliers, who require the software to submit offers for, or perform, government contracts.  Prior to disclosing the software, the Contractor shall require the persons to whom disclosure will be made to complete and sign the non-disclosure agreement at 227.7103-7.  (see DFARS 252.227-7025(b)(2))
 */
-let _url = null;
-let _cmi = null;
+import { Statement, Verb } from "@gradiant/xapi-dsl";
+
+let _url = "";
+let _cmi: Cmi5Spi | null = null;
 
 function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+interface CallbackFunc<T> {
+  (err: Error | null, result?: T): void;
+}
+
+interface PartialStatement {
+  verb: Verb;
+}
+
+interface Cmi5Spi {
+  completed: (extensions: any, cb: CallbackFunc<void>) => void;
+  failed: (score: number, extensions: any, cb: CallbackFunc<void>) => void;
+  passed: (score: number, extensions: any, cb: CallbackFunc<void>) => void;
+  prepareStatement: (st: PartialStatement) => Statement;
+  sendStatement: (st: Statement, cb: CallbackFunc<void>) => void;
+  start: (cb: CallbackFunc<void>) => void;
+  terminate: (cb: CallbackFunc<void>) => void;
 }
 
 /**
@@ -71,10 +91,13 @@ class Cmi5 {
     timeoutMs = 20000,
     retryIntervalMs = 250,
     timerMs = 0
-  ) {
+  ): Promise<Cmi5Spi> {
     return new Promise((resolve, reject) => {
-      if (typeof window !== "undefined" && typeof window.Cmi5 === "function") {
-        _cmi = new window.Cmi5(Cmi5.url);
+      if (
+        typeof window !== "undefined" &&
+        typeof window["Cmi5"] === "function"
+      ) {
+        _cmi = new window["Cmi5"](Cmi5.url) as Cmi5Spi;
         return resolve(_cmi);
       }
       if (timerMs >= timeoutMs) {
@@ -83,15 +106,15 @@ class Cmi5 {
         );
       }
       sleep(retryIntervalMs)
-        .then(_ =>
+        .then((_) =>
           Cmi5._tryCreateWithTimeout(
             timeoutMs,
             retryIntervalMs,
             timerMs + retryIntervalMs
           )
         )
-        .then(cmi => resolve(cmi))
-        .catch(err => reject(err));
+        .then((cmi) => resolve(cmi))
+        .catch((err) => reject(err));
     });
   }
 
@@ -110,7 +133,7 @@ class Cmi5 {
    *
    * @returns {Promise} that resolves an instance of (downloaded) Cmi5 class (which is not the same as this class)
    */
-  static create(url) {
+  static create(url = ''): Promise<Cmi5Spi> {
     _url = url || Cmi5.url;
     const timeoutMs = 5000;
     const retryIntervalMs = 250;
@@ -129,16 +152,11 @@ class Cmi5 {
     return _cmi ? true : false;
   }
 
-  static get instance() {
+  static get instance(): Promise<Cmi5Spi> {
     if (_cmi) {
-      return _cmi;
+      return Promise.resolve(_cmi);
     }
-    try {
-      return Cmi5.create();
-    } catch (err) {
-      console.error(err);
-      return null;
-    }
+    return Cmi5.create();
   }
 }
 

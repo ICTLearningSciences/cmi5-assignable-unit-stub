@@ -18,6 +18,7 @@ Restrictions Notice/Marking: The Government's rights to use, modify, reproduce, 
 
 No Commercial Use: This software shall be used for government purposes only and shall not, without the express written permission of the party whose name appears in the restrictive legend, be used, modified, reproduced, released, performed, or displayed for any commercial purpose or disclosed to a person other than subcontractors, suppliers, or prospective subcontractors or suppliers, who require the software to submit offers for, or perform, government contracts.  Prior to disclosing the software, the Contractor shall require the persons to whom disclosure will be made to complete and sign the non-disclosure agreement at 227.7103-7.  (see DFARS 252.227-7025(b)(2))
 */
+import { Result, Extensions } from "@gradiant/xapi-dsl";
 import React from "react";
 import TinCan from "tincanjs";
 import { Context as CmiContext } from "./context";
@@ -51,13 +52,13 @@ export const Provider = ({ children }) => {
    *      submitting 'completed'. Default is TRUE
    * @params {Boolean} verbose - if TRUE, logs more events to console. Default is FALSE
    */
-  const completed = (
-    score,
-    failed,
-    extensions,
+  async function completed(
+    score: number,
+    failed: boolean,
+    extensions: any,
     terminate = true,
     verbose = false
-  ) => {
+  ): Promise<void> {
     if (!Cmi5.isCmiAvailable) {
       return;
     }
@@ -74,74 +75,78 @@ export const Provider = ({ children }) => {
       );
       return;
     }
-    const cmi = Cmi5.instance;
-    if (!cmi) {
-      /**
-       * the cmi instance will be null if initialization failed with an error
-       * e.g. because this web-app was launched using a url
-       * that didn't have cmi5's expected query params:
-       * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch
-       */
-      console.error(
-        "complete called having no cmi instance (you need to call start action before complete)"
-      );
-      return;
-    }
-    setStatus(Cmi5.STATUS.COMPLETE_IN_PROGRESS);
-    const onCompleteCallback = err => {
-      if (err) {
-        console.error("completion call failed with error:", err);
-        setStatus(Cmi5.STATUS.COMPLETE_FAILED);
-      } else {
-        setStatus(Cmi5.STATUS.COMPLETED);
-      }
-      if (!terminate) {
-        if (verbose) {
-          console.log("after COMPLETED, skipping TERMINATE...");
-        }
+    try {
+      const cmi = await Cmi5.instance;
+      if (!cmi) {
+        /**
+         * the cmi instance will be null if initialization failed with an error
+         * e.g. because this web-app was launched using a url
+         * that didn't have cmi5's expected query params:
+         * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch
+         */
+        console.error(
+          "complete called having no cmi instance (you need to call start action before complete)"
+        );
         return;
       }
-      setStatus(Cmi5.STATUS.TERMINATE_IN_PROGRESS);
-      cmi.terminate(err => {
+      setStatus(Cmi5.STATUS.COMPLETE_IN_PROGRESS);
+      const onCompleteCallback = (err) => {
         if (err) {
           console.error("completion call failed with error:", err);
-          setStatus(Cmi5.STATUS.TERMINATE_FAILED);
+          setStatus(Cmi5.STATUS.COMPLETE_FAILED);
+        } else {
+          setStatus(Cmi5.STATUS.COMPLETED);
+        }
+        if (!terminate) {
+          if (verbose) {
+            console.log("after COMPLETED, skipping TERMINATE...");
+          }
           return;
         }
-        setStatus(Cmi5.STATUS.TERMINATED);
-      });
-    };
-    if (isNaN(Number(score))) {
+        setStatus(Cmi5.STATUS.TERMINATE_IN_PROGRESS);
+        cmi.terminate((err) => {
+          if (err) {
+            console.error("completion call failed with error:", err);
+            setStatus(Cmi5.STATUS.TERMINATE_FAILED);
+            return;
+          }
+          setStatus(Cmi5.STATUS.TERMINATED);
+        });
+      };
+      if (isNaN(Number(score))) {
+        /**
+         * if no score is passed, then we will complete with
+         * the COMPLETED verb (as opposed to PASSED or FAILED)
+         * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#verbs_completed
+         */
+        extensions = score;
+        cmi.completed(extensions, onCompleteCallback);
+        return;
+      }
       /**
-       * if no score is passed, then we will complete with
-       * the COMPLETED verb (as opposed to PASSED or FAILED)
-       * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#verbs_completed
+       * A score was passed, so we will complete with
+       * the either verb PASSED
+       * (https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#verbs_passed)
+       * or FAILED
+       * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#verbs_failed)
        */
-      extensions = score;
-      cmi.completed(extensions, onCompleteCallback);
-      return;
+      failed = typeof failed === "boolean" ? failed : false;
+      if (failed) {
+        cmi.failed(score, extensions, onCompleteCallback);
+      } else {
+        cmi.passed(score, extensions, onCompleteCallback);
+      }
+    } catch (err) {
+      console.error(err);
     }
-    /**
-     * A score was passed, so we will complete with
-     * the either verb PASSED
-     * (https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#verbs_passed)
-     * or FAILED
-     * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#verbs_failed)
-     */
-    failed = typeof failed === "boolean" ? failed : false;
-    if (failed) {
-      cmi.failed(score, extensions, onCompleteCallback);
-    } else {
-      cmi.passed(score, extensions, onCompleteCallback);
-    }
-  };
+  }
 
-  const sendStatement = (
-    verb,
-    activityExtensions,
-    contextExtensions,
-    result
-  ) => {
+  async function sendStatement(
+    verb: string,
+    activityExtensions: Extensions,
+    contextExtensions: Extensions,
+    result: Result
+  ) {
     console.log("CALLED sendStatement...");
     if (!Cmi5.isCmiAvailable) {
       return;
@@ -153,47 +158,55 @@ export const Provider = ({ children }) => {
       );
       return;
     }
-    const cmi = Cmi5.instance;
-    if (!cmi) {
-      /**
-       * the cmi instance will be null if initialization failed with an error
-       * e.g. because this web-app was launched using a url
-       * that didn't have cmi5's expected query params:
-       * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch
-       */
-      console.error(
-        "sendStatement called having no cmi instance (you need to call start action before sendStatement)"
-      );
-      return;
-    }
-    const st = cmi.prepareStatement(verb);
-    if (activityExtensions) {
-      const curDefinition = st.target.definition
-        ? st.target.definition.asVersion()
-        : {};
-      st.target.definition = new TinCan.ActivityDefinition({
-        ...curDefinition,
-        extensions: curDefinition.extensions
-          ? { ...curDefinition.extensions, ...activityExtensions }
-          : activityExtensions,
-      });
-    }
-    if (contextExtensions) {
-      st.context.extensions = st.context.extensions
-        ? { ...st.context.extensions, ...contextExtensions }
-        : contextExtensions;
-    }
-    if (result) {
-      st.result =
-        result instanceof TinCan.Result ? result : new TinCan.Result(result);
-    }
-    cmi.sendStatement(st, err => {
-      if (err) {
-        console.error("sendStatement call failed with error:", err);
+    try {
+      const cmi = await Cmi5.instance;
+      if (!cmi) {
+        /**
+         * the cmi instance will be null if initialization failed with an error
+         * e.g. because this web-app was launched using a url
+         * that didn't have cmi5's expected query params:
+         * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch
+         */
+        console.error(
+          "sendStatement called having no cmi instance (you need to call start action before sendStatement)"
+        );
         return;
       }
-    });
-  };
+      const st = cmi.prepareStatement({
+        verb: {
+          id: verb,
+        },
+      });
+      if (activityExtensions) {
+        const curDefinition = (st as any).target.definition
+          ? (st as any).target.definition.asVersion()
+          : {};
+        (st as any).target.definition = new TinCan.ActivityDefinition({
+          ...curDefinition,
+          extensions: curDefinition.extensions
+            ? { ...curDefinition.extensions, ...activityExtensions }
+            : activityExtensions,
+        });
+      }
+      if (contextExtensions) {
+        st.context.extensions = st.context.extensions
+          ? { ...st.context.extensions, ...contextExtensions }
+          : contextExtensions;
+      }
+      if (result) {
+        st.result =
+          result instanceof TinCan.Result ? result : new TinCan.Result(result);
+      }
+      cmi.sendStatement(st, (err) => {
+        if (err) {
+          console.error("sendStatement call failed with error:", err);
+          return;
+        }
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   /**
    * As early  as possible you must initialize cmi5 by calling the start action.
@@ -201,14 +214,14 @@ export const Provider = ({ children }) => {
    * Under the covers of start, the full cmi5 launch sequence is executed:
    * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch
    */
-  const start = url => {
+  const start = (url) => {
     if (!Cmi5.isCmiAvailable) {
       return;
     }
     setStatus(Cmi5.STATUS.START_IN_PROGRESS);
     Cmi5.create(url)
-      .then(cmi => {
-        cmi.start(startErr => {
+      .then((cmi) => {
+        cmi.start((startErr) => {
           if (startErr) {
             setStatus(Cmi5.STATUS.START_FAILED);
             console.error(`CMI error: ${startErr}`);
@@ -217,7 +230,7 @@ export const Provider = ({ children }) => {
           setStatus(Cmi5.STATUS.STARTED);
         });
       })
-      .catch(err => {
+      .catch((err) => {
         setStatus(Cmi5.STATUS.START_FAILED);
       });
   };
@@ -227,7 +240,7 @@ export const Provider = ({ children }) => {
    * (https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#938-terminated)
    * should be called once (and only once) to end the session.
    */
-  const terminate = () => {
+  async function terminate() {
     if (!Cmi5.isCmiAvailable) {
       return;
     }
@@ -240,29 +253,33 @@ export const Provider = ({ children }) => {
         status
       );
     }
-    const cmi = Cmi5.instance;
-    if (!cmi) {
-      /**
-       * the cmi instance will be null if initialization failed with an error
-       * e.g. because this web-app was launched using a url
-       * that didn't have cmi5's expected query params:
-       * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch
-       */
-      console.error(
-        "complete called having no cmi instance (you need to call start action before complete)"
-      );
-      return;
-    }
-    sendStatus(Cmi5.STATUS.TERMINATE_IN_PROGRESS);
-    cmi.terminate(err => {
-      if (err) {
-        console.error("completion call failed with error:", err);
-        sendStatus(Cmi5.STATUS.TERMINATE_FAILED);
+    try {
+      const cmi = await Cmi5.instance;
+      if (!cmi) {
+        /**
+         * the cmi instance will be null if initialization failed with an error
+         * e.g. because this web-app was launched using a url
+         * that didn't have cmi5's expected query params:
+         * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch
+         */
+        console.error(
+          "complete called having no cmi instance (you need to call start action before complete)"
+        );
         return;
       }
-      sendStatus(Cmi5.STATUS.TERMINATED);
-    });
-  };
+      setStatus(Cmi5.STATUS.TERMINATE_IN_PROGRESS);
+      cmi.terminate((err) => {
+        if (err) {
+          console.error("completion call failed with error:", err);
+          setStatus(Cmi5.STATUS.TERMINATE_FAILED);
+          return;
+        }
+        setStatus(Cmi5.STATUS.TERMINATED);
+      });
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   return (
     <CmiContext.Provider

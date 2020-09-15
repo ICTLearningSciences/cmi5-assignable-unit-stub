@@ -6,4 +6,4 @@ clean:
 	rm -rf node_modules static .cache public
 
 develop:
-	gatsby develop
+	npx gatsby develop
