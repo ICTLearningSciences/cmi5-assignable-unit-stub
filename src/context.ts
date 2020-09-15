@@ -12,12 +12,12 @@ import { Extensions, Result } from "@gradiant/xapi-dsl";
 import React from "react";
 import { Cmi5Status, HasVerb } from "./cmi5";
 
-export interface ICmi5Context {
+export interface Cmi5Context {
   cmiStatus: Cmi5Status;
   completed: (
     score: number,
     failed: boolean,
-    extensions: any,
+    extensions?: Extensions,
     terminate?: boolean,
     verbose?: boolean
   ) => Promise<void>;
@@ -30,18 +30,8 @@ export interface ICmi5Context {
   start: () => Promise<void>;
   terminate: () => Promise<void>;
 }
-export const Context = React.createContext<ICmi5Context>({
+export const Context = React.createContext<Partial<Cmi5Context>>({
   cmiStatus: Cmi5Status.NONE,
-  completed: (
-    score,
-    failed,
-    extensions,
-    terminate = true,
-    verbose = false
-  ) => {},
-  sendStatement: (verb, activityExtensions, contextExtensions, result) => {},
-  start: (start) => {},
-  terminate: () => {},
 });
 
 export default Context;

@@ -19,12 +19,12 @@ Restrictions Notice/Marking: The Government's rights to use, modify, reproduce, 
 No Commercial Use: This software shall be used for government purposes only and shall not, without the express written permission of the party whose name appears in the restrictive legend, be used, modified, reproduced, released, performed, or displayed for any commercial purpose or disclosed to a person other than subcontractors, suppliers, or prospective subcontractors or suppliers, who require the software to submit offers for, or perform, government contracts.  Prior to disclosing the software, the Contractor shall require the persons to whom disclosure will be made to complete and sign the non-disclosure agreement at 227.7103-7.  (see DFARS 252.227-7025(b)(2))
 */
 import { Result, Extensions } from "@gradiant/xapi-dsl";
-import React, { useEffect } from "react";
+import React from "react";
 import TinCan from "tincanjs";
 import { Context as CmiContext } from "./context";
 import Cmi5, { Cmi5Status } from "./cmi5";
 
-export const Provider = ({ children }) => {
+export function Provider({ children }): JSX.Element {
   const [status, setStatus] = React.useState(Cmi5Status.NONE);
 
   /**
@@ -55,7 +55,7 @@ export const Provider = ({ children }) => {
   async function completed(
     score: number,
     failed: boolean,
-    extensions: any,
+    extensions?: Extensions,
     terminate = true,
     verbose = false
   ): Promise<void> {
@@ -89,13 +89,13 @@ export const Provider = ({ children }) => {
         );
         return;
       }
-      setStatus(status => Cmi5Status.COMPLETE_IN_PROGRESS);
-      const onCompleteCallback = (err) => {
+      setStatus(() => Cmi5Status.COMPLETE_IN_PROGRESS);
+      const onCompleteCallback = (err: Error): void => {
         if (err) {
           console.error("completion call failed with error:", err);
-          setStatus(status => Cmi5Status.COMPLETE_FAILED);
+          setStatus(() => Cmi5Status.COMPLETE_FAILED);
         } else {
-          setStatus(status => Cmi5Status.COMPLETED);
+          setStatus(() => Cmi5Status.COMPLETED);
         }
         if (!terminate) {
           if (verbose) {
@@ -103,14 +103,14 @@ export const Provider = ({ children }) => {
           }
           return;
         }
-        setStatus(status => Cmi5Status.TERMINATE_IN_PROGRESS);
+        setStatus(() => Cmi5Status.TERMINATE_IN_PROGRESS);
         cmi.terminate((err) => {
           if (err) {
             console.error("completion call failed with error:", err);
-            setStatus(status => Cmi5Status.TERMINATE_FAILED);
+            setStatus(() => Cmi5Status.TERMINATE_FAILED);
             return;
           }
-          setStatus(status => Cmi5Status.TERMINATED);
+          setStatus(() => Cmi5Status.TERMINATED);
         });
       };
       if (isNaN(Number(score))) {
@@ -119,8 +119,7 @@ export const Provider = ({ children }) => {
          * the COMPLETED verb (as opposed to PASSED or FAILED)
          * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#verbs_completed
          */
-        extensions = score;
-        cmi.completed(extensions, onCompleteCallback);
+        cmi.completed(score, onCompleteCallback);
         return;
       }
       /**
@@ -146,7 +145,7 @@ export const Provider = ({ children }) => {
     activityExtensions: Extensions,
     contextExtensions: Extensions,
     result: Result
-  ) {
+  ): Promise<void> {
     console.log("CALLED sendStatement...");
     if (!Cmi5.isCmiAvailable) {
       return;
@@ -214,24 +213,24 @@ export const Provider = ({ children }) => {
    * Under the covers of start, the full cmi5 launch sequence is executed:
    * https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#content_launch
    */
-  async function start(url = "") {
+  async function start(url = ""): Promise<void> {
     if (!Cmi5.isCmiAvailable) {
       return;
     }
-    setStatus(status => Cmi5Status.START_IN_PROGRESS);
+    setStatus(() => Cmi5Status.START_IN_PROGRESS);
     Cmi5.create(url)
       .then((cmi) => {
         cmi.start((startErr) => {
           if (startErr) {
-            setStatus(status => Cmi5Status.START_FAILED);
+            setStatus(() => Cmi5Status.START_FAILED);
             console.error(`CMI error: ${startErr}`);
             return;
           }
-          setStatus(status => Cmi5Status.STARTED);
+          setStatus(() => Cmi5Status.STARTED);
         });
       })
       .catch((err) => {
-        setStatus(status => Cmi5Status.START_FAILED);
+        setStatus(() => Cmi5Status.START_FAILED);
       });
   }
 
@@ -240,7 +239,7 @@ export const Provider = ({ children }) => {
    * (https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#938-terminated)
    * should be called once (and only once) to end the session.
    */
-  async function terminate() {
+  async function terminate(): Promise<void> {
     if (!Cmi5.isCmiAvailable) {
       return;
     }
@@ -267,22 +266,25 @@ export const Provider = ({ children }) => {
         );
         return;
       }
-      setStatus(status => Cmi5Status.TERMINATE_IN_PROGRESS);
+      setStatus(() => Cmi5Status.TERMINATE_IN_PROGRESS);
       cmi.terminate((err) => {
         if (err) {
           console.error("completion call failed with error:", err);
-          setStatus(status => Cmi5Status.TERMINATE_FAILED);
+          setStatus(() => Cmi5Status.TERMINATE_FAILED);
           return;
         }
-        setStatus(status => Cmi5Status.TERMINATED);
+        setStatus(() => Cmi5Status.TERMINATED);
       });
     } catch (err) {
       console.error(err);
     }
   }
-  if(Cmi5.isCmiAvailable && status === Cmi5Status.NONE) {
-    start();
-  }
+  console.log(`here in render!`, Cmi5.isCmiAvailable);
+  // useEffect(() => {
+  //   if (Cmi5.isCmiAvailable && status === Cmi5Status.NONE) {
+  //     start();
+  //   }
+  // }, []);
   return (
     <CmiContext.Provider
       value={{
@@ -296,6 +298,6 @@ export const Provider = ({ children }) => {
       {children}
     </CmiContext.Provider>
   );
-};
+}
 
 export default Provider;
