@@ -2,19 +2,24 @@
   "name": "react-cmi5-context",
   "version": "0.1.0",
   "description": "",
-  "main": "dist/index.js",
+  "main": "build/index.js",
+  "module": "build/index.es.js",
+  "files": [
+    "build",
+    "scripts"
+  ],
   "publishConfig": {
     "access": "public"
   },
   "scripts": {
     "clean": "rm -rf node_modules *.tgz",
     "deps:update": "npx ncu -u",
-    "build": "webpack --config webpack.config.js",
+    "build": "rollup -c",
+    "format": "prettier --write '**/*.{js,jsx,json}'",
+    "license:fix": "license-check-and-add remove -f license-config.json && license-check-and-add add -f license-config.json",
     "pack:latest": "npm run build && npm pack && cp ${npm_package_name}-${npm_package_version}.tgz ${npm_package_name}-latest.tgz",
     "postinstall": "node ./scripts/postinstall.js",
     "postversion": "git push && git push --tags",
-    "format": "prettier --write '**/*.{js,jsx,json}'",
-    "license:fix": "license-check-and-add remove -f license-config.json && license-check-and-add add -f license-config.json",
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:format": "prettier --check '**/*.{js,jsx,json}'",
     "test:license": "license-check-and-add check -f license-config.json",
@@ -41,19 +46,8 @@
     "react-dom": ">=16.13.1"
   },
   "devDependencies": {
-    "@babel/core": "^7.11.6",
-    "@babel/plugin-proposal-object-rest-spread": "^7.11.0",
-    "@babel/preset-env": "^7.11.5",
-    "@babel/preset-es2015": "^7.0.0-beta.53",
-    "@babel/preset-react": "^7.10.4",
     "@rollup/plugin-commonjs": "^15.0.0",
     "@rollup/plugin-node-resolve": "^9.0.0",
-    "babel-cli": "^6.26.0",
-    "babel-core": "^6.26.3",
-    "babel-eslint": "^10.1.0",
-    "babel-loader": "^8.1.0",
-    "babel-plugin-transform-object-rest-spread": "^6.26.0",
-    "babel-plugin-transform-react-jsx": "^6.24.1",
     "license-check-and-add": "^3.0.4",
     "npm-check-updates": "^9.0.1",
     "prettier": "^2.1.1",
@@ -62,9 +56,7 @@
     "rollup": "^2.26.11",
     "rollup-plugin-peer-deps-external": "^2.2.3",
     "rollup-plugin-typescript2": "^0.27.2",
-    "typescript": "^4.0.2",
-    "webpack": "^4.44.1",
-    "webpack-cli": "^3.3.12"
+    "typescript": "^4.0.2"
   },
   "dependencies": {
     "@gradiant/xapi-dsl": "^1.10.0",

@@ -3,7 +3,7 @@ DOCKER_ACCOUNT?=uscictdocker
 DOCKER_IMAGE?=uscictdocker/react-cmi5-context
 
 clean:
-	rm -rf node_modules dist *.tgz
+	rm -rf node_modules build *.tgz
 
 build:
 	npm ci && npm run pack:latest

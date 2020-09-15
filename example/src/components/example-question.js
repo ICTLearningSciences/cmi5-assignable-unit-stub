@@ -30,7 +30,7 @@ const ExampleQuestion = () => {
   const cmi = useContext(CmiContext);
   const { completed, terminate } = cmi;
 
-  const onInput = e => {
+  const onInput = (e) => {
     setScore(parseFloat(e.target.value));
   };
 
@@ -63,7 +63,7 @@ const ExampleQuestion = () => {
         placeholder="Score"
         fullWidth
         value={score}
-        onChange={e => {
+        onChange={(e) => {
           onInput(e);
         }}
         variant="outlined"

@@ -1,7 +1,7 @@
 {
   "name": "react-cmi5-context-example",
   "private": true,
-  "description": "A simplified bare-bones starter for Gatsby",
+  "description": "stub app to test cmi5 integration",
   "version": "0.1.0",
   "license": "0BSD",
   "scripts": {
@@ -10,7 +10,7 @@
     "deps:update": "npx ncu -u",
     "develop": "gatsby develop",
     "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,md}\"",
-    "preinstall": "cd .. && npm run pack:latest",
+    "preinstall": "cd .. && npm run pack:latest && cd ..",
     "serve": "gatsby serve",
     "start": "npm run develop",
     "test": "echo \"Write tests! -> https://gatsby.dev/unit-testing\" && exit 1"
@@ -23,18 +23,11 @@
     "gatsby-plugin-material-ui": "^2.1.10",
     "gatsby-plugin-typescript": "^2.4.19",
     "react": "^16.13.1",
-    "react-cmi5-context": "../react-cmi5-context-latest.tgz",
-    "react-dom": "^16.13.1"
+    "react-dom": "^16.13.1",
+    "react-cmi5-context": "../react-cmi5-context-latest.tgz"
   },
   "devDependencies": {
     "npm-check-updates": "^9.0.1",
     "prettier": "2.1.1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/gatsbyjs/gatsby-starter-hello-world"
-  },
-  "bugs": {
-    "url": "https://github.com/gatsbyjs/gatsby/issues"
   }
 }
