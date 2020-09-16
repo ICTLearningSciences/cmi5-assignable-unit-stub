@@ -55,7 +55,7 @@ class Cmi5 {
   /**
    * Cmi is only available if the required query params are on the url string
    */
-  static get isCmiAvailable() {
+  static get isCmiAvailable(): boolean {
     if (Cmi5.instanceExists) {
       return true;
     }
@@ -104,7 +104,7 @@ class Cmi5 {
         );
       }
       sleep(retryIntervalMs)
-        .then((_) =>
+        .then(() =>
           Cmi5._tryCreateWithTimeout(
             timeoutMs,
             retryIntervalMs,
@@ -138,15 +138,15 @@ class Cmi5 {
     return this._tryCreateWithTimeout(timeoutMs, retryIntervalMs, 0);
   }
 
-  static get url() {
-    return _url || typeof window !== "undefined" ? window.location.href : null;
+  static get url(): string {
+    return _url || typeof window !== "undefined" ? window.location.href : "";
   }
 
   static set url(value) {
     _url = value;
   }
 
-  static get instanceExists() {
+  static get instanceExists(): boolean {
     return _cmi ? true : false;
   }
 
