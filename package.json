@@ -23,9 +23,8 @@
     "test": "jest",
     "test:all": "npx run test:format && npx run test:lint && npx run test:audit && npx run test:types && npx run test:cypress && npx test",
     "test:audit": "npm audit --level=moderate",
-    "test:cypress": "npx run cy:run --spec  'cypress/**/*.spec.js'",
     "test:format": "prettier --check '**/*.{js,jsx,json,ts,tsx}'",
-    "test:license": "license-check-and-add check -f license-config.json",
+    "test:license": "npx license-check-and-add check -f license-config.json",
     "test:lint": "eslint src --ext ts --ext tsx --ext js --ext jsx",
     "test:types": "tsc --noEmit",
     "test:watch": "jest --watch"

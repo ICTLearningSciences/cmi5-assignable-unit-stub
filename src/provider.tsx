@@ -20,11 +20,16 @@ No Commercial Use: This software shall be used for government purposes only and 
 */
 import { Result, Extensions } from "@gradiant/xapi-dsl";
 import React from "react";
-import TinCan from "tincanjs";
 import { Context as CmiContext } from "./context";
-import Cmi5, { Cmi5Status, HasVerb } from "./cmi5";
+import Cmi5, { Cmi5Status } from "./cmi5";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const TinCan = require("tincanjs");
 
-export function Provider({ children }): JSX.Element {
+interface Props {
+  children: React.ReactNode;
+}
+export function Provider(props: Props): JSX.Element {
+  const { children } = props;
   const [cmiStatus, setCmiStatus] = React.useState(Cmi5Status.NONE);
 
   /**
@@ -90,7 +95,7 @@ export function Provider({ children }): JSX.Element {
         return;
       }
       setCmiStatus(() => Cmi5Status.COMPLETE_IN_PROGRESS);
-      const onCompleteCallback = (err: Error): void => {
+      const onCompleteCallback = (err: Error | null): void => {
         if (err) {
           console.error("completion call failed with error:", err);
           setCmiStatus(() => Cmi5Status.COMPLETE_FAILED);
@@ -188,8 +193,8 @@ export function Provider({ children }): JSX.Element {
         });
       }
       if (contextExtensions) {
-        st.context.extensions = st.context.extensions
-          ? { ...st.context.extensions, ...contextExtensions }
+        st.context!.extensions = st.context!.extensions
+          ? { ...st.context!.extensions, ...contextExtensions }
           : contextExtensions;
       }
       if (result) {
@@ -230,7 +235,7 @@ export function Provider({ children }): JSX.Element {
         });
       })
       .catch((err: Error) => {
-        console.error(err)
+        console.error(err);
         setCmiStatus(() => Cmi5Status.START_FAILED);
       });
   }

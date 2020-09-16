@@ -22,7 +22,7 @@ export interface Cmi5Context {
     verbose?: boolean
   ) => Promise<void>;
   sendStatement: (
-    verb: HasVerb | string,
+    verb: string,
     activityExtensions?: Extensions,
     contextExtensions?: Extensions,
     result?: Result

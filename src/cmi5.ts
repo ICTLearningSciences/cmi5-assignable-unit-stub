@@ -59,11 +59,9 @@ class Cmi5 {
     if (Cmi5.instanceExists) {
       return true;
     }
-    console.log(`what is window? ${window}`);
     if (!window || typeof window !== "object") {
       return false;
     }
-    console.log(`what is window.location? ${window.location}`);
     if (!window.location || typeof window.location.search !== "string") {
       return false;
     }
