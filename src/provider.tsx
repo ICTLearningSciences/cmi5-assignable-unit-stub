@@ -22,7 +22,7 @@ import { Result, Extensions } from "@gradiant/xapi-dsl";
 import React from "react";
 import TinCan from "tincanjs";
 import { Context as CmiContext } from "./context";
-import Cmi5, { Cmi5Status } from "./cmi5";
+import Cmi5, { Cmi5Status, HasVerb } from "./cmi5";
 
 export function Provider({ children }): JSX.Element {
   const [cmiStatus, setCmiStatus] = React.useState(Cmi5Status.NONE);
@@ -142,9 +142,9 @@ export function Provider({ children }): JSX.Element {
 
   async function sendStatement(
     verb: string,
-    activityExtensions: Extensions,
-    contextExtensions: Extensions,
-    result: Result
+    activityExtensions?: Extensions,
+    contextExtensions?: Extensions,
+    result?: Result
   ): Promise<void> {
     console.log("CALLED sendStatement...");
     if (!Cmi5.isCmiAvailable) {
@@ -173,7 +173,7 @@ export function Provider({ children }): JSX.Element {
       }
       const st = cmi.prepareStatement({
         verb: {
-          id: verb,
+          id: `${verb}`,
         },
       });
       if (activityExtensions) {
@@ -229,7 +229,8 @@ export function Provider({ children }): JSX.Element {
           setCmiStatus(() => Cmi5Status.STARTED);
         });
       })
-      .catch((err) => {
+      .catch((err: Error) => {
+        console.error(err)
         setCmiStatus(() => Cmi5Status.START_FAILED);
       });
   }

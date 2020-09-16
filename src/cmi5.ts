@@ -13,7 +13,7 @@ import { Statement, Verb } from "@gradiant/xapi-dsl";
 let _url = "";
 let _cmi: Cmi5Spi | null = null;
 
-function sleep(ms) {
+function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
@@ -59,9 +59,11 @@ class Cmi5 {
     if (Cmi5.instanceExists) {
       return true;
     }
+    console.log(`what is window? ${window}`);
     if (!window || typeof window !== "object") {
       return false;
     }
+    console.log(`what is window.location? ${window.location}`);
     if (!window.location || typeof window.location.search !== "string") {
       return false;
     }
@@ -93,9 +95,9 @@ class Cmi5 {
     return new Promise((resolve, reject) => {
       if (
         typeof window !== "undefined" &&
-        typeof window["Cmi5"] === "function"
+        typeof (window as any)["Cmi5"] === "function"
       ) {
-        _cmi = new window["Cmi5"](Cmi5.url) as Cmi5Spi;
+        _cmi = new (window as any)["Cmi5"](Cmi5.url) as Cmi5Spi;
         return resolve(_cmi);
       }
       if (timerMs >= timeoutMs) {

@@ -25,4 +25,14 @@ describe("<Cmi5Provider>", () => {
       expect(screen.getByTestId("cmiStatus").textContent).toBe(Cmi5Status.NONE);
     });
   });
+  describe("cmi", () => {
+    it("has initial value NONE", async () => {
+      render(
+        <Cmi5Provider>
+          <CmiStatus />
+        </Cmi5Provider>
+      );
+      expect(screen.getByTestId("cmiStatus").textContent).toBe(Cmi5Status.NONE);
+    });
+  });
 });
