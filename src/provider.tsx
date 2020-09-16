@@ -25,7 +25,7 @@ import { Context as CmiContext } from "./context";
 import Cmi5, { Cmi5Status } from "./cmi5";
 
 export function Provider({ children }): JSX.Element {
-  const [status, setStatus] = React.useState(Cmi5Status.NONE);
+  const [cmiStatus, setCmiStatus] = React.useState(Cmi5Status.NONE);
 
   /**
    * Mark the lesson as completed with a score (or no score if non assement),
@@ -66,12 +66,12 @@ export function Provider({ children }): JSX.Element {
       console.log("cmi5 sending COMPLETED and will follow with TERMINATE...");
     }
     if (
-      status !== Cmi5Status.STARTED &&
-      status !== Cmi5Status.COMPLETE_FAILED
+      cmiStatus !== Cmi5Status.STARTED &&
+      cmiStatus !== Cmi5Status.COMPLETE_FAILED
     ) {
       console.error(
         "complete called from invalid state (you need to call start action before complete and complete can be called only ONE time)",
-        status
+        cmiStatus
       );
       return;
     }
@@ -89,13 +89,13 @@ export function Provider({ children }): JSX.Element {
         );
         return;
       }
-      setStatus(() => Cmi5Status.COMPLETE_IN_PROGRESS);
+      setCmiStatus(() => Cmi5Status.COMPLETE_IN_PROGRESS);
       const onCompleteCallback = (err: Error): void => {
         if (err) {
           console.error("completion call failed with error:", err);
-          setStatus(() => Cmi5Status.COMPLETE_FAILED);
+          setCmiStatus(() => Cmi5Status.COMPLETE_FAILED);
         } else {
-          setStatus(() => Cmi5Status.COMPLETED);
+          setCmiStatus(() => Cmi5Status.COMPLETED);
         }
         if (!terminate) {
           if (verbose) {
@@ -103,14 +103,14 @@ export function Provider({ children }): JSX.Element {
           }
           return;
         }
-        setStatus(() => Cmi5Status.TERMINATE_IN_PROGRESS);
+        setCmiStatus(() => Cmi5Status.TERMINATE_IN_PROGRESS);
         cmi.terminate((err) => {
           if (err) {
             console.error("completion call failed with error:", err);
-            setStatus(() => Cmi5Status.TERMINATE_FAILED);
+            setCmiStatus(() => Cmi5Status.TERMINATE_FAILED);
             return;
           }
-          setStatus(() => Cmi5Status.TERMINATED);
+          setCmiStatus(() => Cmi5Status.TERMINATED);
         });
       };
       if (isNaN(Number(score))) {
@@ -150,10 +150,10 @@ export function Provider({ children }): JSX.Element {
     if (!Cmi5.isCmiAvailable) {
       return;
     }
-    if (status !== Cmi5Status.STARTED) {
+    if (cmiStatus !== Cmi5Status.STARTED) {
       console.error(
-        "Send statement called when status is not STARTED.",
-        status
+        "Send statement called when cmiStatus is not STARTED.",
+        cmiStatus
       );
       return;
     }
@@ -217,20 +217,20 @@ export function Provider({ children }): JSX.Element {
     if (!Cmi5.isCmiAvailable) {
       return;
     }
-    setStatus(() => Cmi5Status.START_IN_PROGRESS);
+    setCmiStatus(() => Cmi5Status.START_IN_PROGRESS);
     Cmi5.create(url)
       .then((cmi) => {
         cmi.start((startErr) => {
           if (startErr) {
-            setStatus(() => Cmi5Status.START_FAILED);
+            setCmiStatus(() => Cmi5Status.START_FAILED);
             console.error(`CMI error: ${startErr}`);
             return;
           }
-          setStatus(() => Cmi5Status.STARTED);
+          setCmiStatus(() => Cmi5Status.STARTED);
         });
       })
       .catch((err) => {
-        setStatus(() => Cmi5Status.START_FAILED);
+        setCmiStatus(() => Cmi5Status.START_FAILED);
       });
   }
 
@@ -244,12 +244,12 @@ export function Provider({ children }): JSX.Element {
       return;
     }
     if (
-      status !== Cmi5Status.COMPLETED &&
-      status !== Cmi5Status.TERMINATE_FAILED
+      cmiStatus !== Cmi5Status.COMPLETED &&
+      cmiStatus !== Cmi5Status.TERMINATE_FAILED
     ) {
       console.error(
-        'Terminate called when status is not COMPLETED. Generally safer to use "completeAndTerminate" action',
-        status
+        'Terminate called when cmiStatus is not COMPLETED. Generally safer to use "completeAndTerminate" action',
+        cmiStatus
       );
     }
     try {
@@ -266,29 +266,28 @@ export function Provider({ children }): JSX.Element {
         );
         return;
       }
-      setStatus(() => Cmi5Status.TERMINATE_IN_PROGRESS);
+      setCmiStatus(() => Cmi5Status.TERMINATE_IN_PROGRESS);
       cmi.terminate((err) => {
         if (err) {
           console.error("completion call failed with error:", err);
-          setStatus(() => Cmi5Status.TERMINATE_FAILED);
+          setCmiStatus(() => Cmi5Status.TERMINATE_FAILED);
           return;
         }
-        setStatus(() => Cmi5Status.TERMINATED);
+        setCmiStatus(() => Cmi5Status.TERMINATED);
       });
     } catch (err) {
       console.error(err);
     }
   }
-  console.log(`here in render!`, Cmi5.isCmiAvailable);
   // useEffect(() => {
-  //   if (Cmi5.isCmiAvailable && status === Cmi5Status.NONE) {
+  //   if (Cmi5.isCmiAvailable && cmiStatus === Cmi5Status.NONE) {
   //     start();
   //   }
   // }, []);
   return (
     <CmiContext.Provider
       value={{
-        cmiStatus: status,
+        cmiStatus: cmiStatus,
         completed,
         sendStatement,
         start,

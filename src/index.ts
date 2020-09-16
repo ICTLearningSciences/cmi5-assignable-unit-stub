@@ -10,6 +10,6 @@ No Commercial Use: This software shall be used for government purposes only and 
 */
 import { Context, Cmi5Context } from "./context";
 import { Provider } from "./provider";
-import Cmi5 from "./cmi5";
+import Cmi5, { Cmi5Status } from "./cmi5";
 
-export { Context, Cmi5, Cmi5Context, Provider };
+export { Context, Cmi5, Cmi5Context, Cmi5Status, Provider };
