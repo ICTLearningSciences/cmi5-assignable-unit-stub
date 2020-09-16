@@ -26,12 +26,28 @@ export interface Cmi5Context {
     activityExtensions?: Extensions,
     contextExtensions?: Extensions,
     result?: Result
-  ) => {};
+  ) => Promise<void>;
   start: () => Promise<void>;
   terminate: () => Promise<void>;
 }
-export const Context = React.createContext<Partial<Cmi5Context>>({
+
+export const Context = React.createContext<Cmi5Context>({
   cmiStatus: Cmi5Status.NONE,
+  completed: (
+    score: number,
+    failed: boolean,
+    extensions?: Extensions,
+    terminate?: boolean,
+    verbose?: boolean
+  ) => Promise.reject("Context must be wrapped by provider"),
+  sendStatement: (
+    verb: HasVerb | string,
+    activityExtensions?: Extensions,
+    contextExtensions?: Extensions,
+    result?: Result
+  ) => Promise.reject("Context must be wrapped by provider"),
+  start: () => Promise.reject("Context must be wrapped by provider"),
+  terminate: () => Promise.reject("Context must be wrapped by provider"),
 });
 
 export default Context;
