@@ -9,12 +9,11 @@ Restrictions Notice/Marking: The Government's rights to use, modify, reproduce, 
 No Commercial Use: This software shall be used for government purposes only and shall not, without the express written permission of the party whose name appears in the restrictive legend, be used, modified, reproduced, released, performed, or displayed for any commercial purpose or disclosed to a person other than subcontractors, suppliers, or prospective subcontractors or suppliers, who require the software to submit offers for, or perform, government contracts.  Prior to disclosing the software, the Contractor shall require the persons to whom disclosure will be made to complete and sign the non-disclosure agreement at 227.7103-7.  (see DFARS 252.227-7025(b)(2))
 */
 import React from "react";
-import Helmet from 'react-helmet'
+import Helmet from "react-helmet";
 import ExampleQuestion from "components/example-question";
 
 export default function Index() {
   return (
-    
     <div>
       <Helmet>
         <script src={"cmi5.js"} type="text/javascript" />

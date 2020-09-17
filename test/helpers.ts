@@ -81,9 +81,9 @@ export class MockCmi5Helper implements Cmi5HelperParams {
     xhrMock.post(this.fetch, {
       status: 200,
       body: {
-        'auth-token': 'fake-auth-token',
-      }
-    })
+        "auth-token": "fake-auth-token",
+      },
+    });
   }
 
   restore(): void {
