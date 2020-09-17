@@ -24,8 +24,9 @@
     "gatsby-plugin-material-ui": "^2.1.10",
     "gatsby-plugin-typescript": "^2.4.20",
     "react": "^16.13.1",
+    "react-cmi5-context": "../react-cmi5-context-latest.tgz",
     "react-dom": "^16.13.1",
-    "react-cmi5-context": "../react-cmi5-context-latest.tgz"
+    "react-helmet": "^6.1.0"
   },
   "devDependencies": {
     "npm-check-updates": "^9.0.1",

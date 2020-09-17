@@ -6,6 +6,7 @@
   "module": "build/index.es.js",
   "files": [
     "build",
+    "lib",
     "scripts"
   ],
   "publishConfig": {
