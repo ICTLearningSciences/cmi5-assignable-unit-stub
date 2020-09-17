@@ -83,7 +83,8 @@
     "rollup-plugin-typescript2": "^0.27.2",
     "ts-jest": "^26.3.0",
     "typescript": "^4.0.2",
-    "webpack": "^4.44.1"
+    "webpack": "^4.44.1",
+    "xhr-mock": "^2.5.1"
   },
   "dependencies": {
     "@gradiant/xapi-dsl": "^1.10.0",

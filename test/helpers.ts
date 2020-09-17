@@ -1,4 +1,5 @@
 import { Agent } from "@gradiant/xapi-dsl";
+import xhrMock from "xhr-mock";
 
 export interface Cmi5HelperParams {
   activityId: string;
@@ -26,7 +27,6 @@ export const DEFAULT_CMI5_PARAMS: Cmi5HelperParams = {
 };
 
 const _setWindowLocation = (newLocation: URL | Location) => {
-  console.log("setting window location to ", newLocation);
   delete (window as any).location;
   (window as any).location = newLocation;
 };
@@ -39,6 +39,7 @@ export class MockCmi5Helper implements Cmi5HelperParams {
   registration = DEFAULT_CMI5_PARAMS.registration;
   urlBase = DEFAULT_CMI5_PARAMS.urlBase;
   locationOriginal?: Location;
+  _isMockSetup = false;
 
   constructor(params: Partial<Cmi5HelperParams> = {}) {
     this.activityId = params.activityId || this.activityId;
@@ -68,9 +69,30 @@ export class MockCmi5Helper implements Cmi5HelperParams {
     _setWindowLocation(this.url);
   }
 
+  _ensureXhrMocked(): void {
+    if (!this._isMockSetup) {
+      xhrMock.setup();
+      this._isMockSetup = true;
+    }
+  }
+
+  mockFetch(): void {
+    this._ensureXhrMocked();
+    xhrMock.post(this.fetch, {
+      status: 200,
+      body: {
+        'auth-token': 'fake-auth-token',
+      }
+    })
+  }
+
   restore(): void {
     if (this.locationOriginal) {
       _setWindowLocation(this.locationOriginal);
+    }
+    if (this._isMockSetup) {
+      xhrMock.teardown();
+      this._isMockSetup = false;
     }
   }
 }

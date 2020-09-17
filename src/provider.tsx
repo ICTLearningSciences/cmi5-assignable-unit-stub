@@ -19,7 +19,7 @@ Restrictions Notice/Marking: The Government's rights to use, modify, reproduce, 
 No Commercial Use: This software shall be used for government purposes only and shall not, without the express written permission of the party whose name appears in the restrictive legend, be used, modified, reproduced, released, performed, or displayed for any commercial purpose or disclosed to a person other than subcontractors, suppliers, or prospective subcontractors or suppliers, who require the software to submit offers for, or perform, government contracts.  Prior to disclosing the software, the Contractor shall require the persons to whom disclosure will be made to complete and sign the non-disclosure agreement at 227.7103-7.  (see DFARS 252.227-7025(b)(2))
 */
 import { Result, Extensions } from "@gradiant/xapi-dsl";
-import React from "react";
+import React, { useEffect } from "react";
 import { Context as CmiContext } from "./context";
 import Cmi5, { Cmi5Status } from "./cmi5";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -285,11 +285,11 @@ export function Provider(props: Props): JSX.Element {
       console.error(err);
     }
   }
-  // useEffect(() => {
-  //   if (Cmi5.isCmiAvailable && cmiStatus === Cmi5Status.NONE) {
-  //     start();
-  //   }
-  // }, []);
+  useEffect(() => {
+    if (Cmi5.isCmiAvailable && cmiStatus === Cmi5Status.NONE) {
+      start();
+    }
+  }, []);
   return (
     <CmiContext.Provider
       value={{
