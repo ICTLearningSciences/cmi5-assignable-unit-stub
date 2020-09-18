@@ -1,4 +1,9 @@
-import { Cmi5, Cmi5Service, VERB_INITIALIZED } from "../../src/cmi5";
+import {
+  Cmi5,
+  Cmi5Service,
+  VERB_INITIALIZED,
+  VERB_TERMINATED,
+} from "../../src/cmi5";
 import { MockCmi5Helper, DEFAULT_CMI5_PARAMS } from "../helpers";
 import * as xapi from "../../src/xapi";
 jest.mock("../../src/xapi");
@@ -73,18 +78,19 @@ describe("Cmi5", () => {
         }),
       ]);
     });
+  });
 
-    // it("sends the cmi5 initialized statement", async () => {
-    //   mockCmi5.mockLocation();
-    //   mockCmi5.mockFetch();
-    //   const cmi5 = Cmi5.get();
-    //   await cmi5.start();
-    //   expect(mockCmi5.mockNewLrs).toHaveBeenCalledWith({
-    //     endpoint: mockCmi5.endpoint,
-    //     username: mockCmi5.accessTokenUsername,
-    //     password: mockCmi5.accessTokenPassword,
-    //   });
-    //   // expect(mockSaveStatements).toHaveBeenCalledTimes(1);
-    // });
+  describe("terminate", () => {
+    it("posts cmi5 TERMINATED statement", async () => {
+      const cmi5 = await start(mockCmi5);
+      cmi5.terminate();
+      expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
+        expect.objectContaining({
+          verb: expect.objectContaining({
+            id: VERB_TERMINATED,
+          }),
+        }),
+      ]);
+    });
   });
 });

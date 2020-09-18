@@ -41,7 +41,11 @@ export interface Cmi5Service {
   readonly terminate: () => Promise<void>;
 }
 
+export const VERB_COMPLETED = "http://adlnet.gov/expapi/verbs/completed";
+export const VERB_FAILED = "http://adlnet.gov/expapi/verbs/failed";
 export const VERB_INITIALIZED = "http://adlnet.gov/expapi/verbs/initialized";
+export const VERB_PASSED = "http://adlnet.gov/expapi/verbs/passed";
+export const VERB_TERMINATED = "http://adlnet.gov/expapi/verbs/terminated";
 
 // export enum Cmi5Status {
 //   NONE = "NONE",
@@ -125,28 +129,28 @@ class _CmiService implements Cmi5Service {
     return {
       actor: this.params.actor,
       context: {
-        registration: this.params.registration
+        registration: this.params.registration,
       },
       object: {
-        id: this.params.activityId
+        id: this.params.activityId,
       },
       verb: {
-        id: verb
-      }
-    }
+        id: verb,
+      },
+    };
   }
 
   async sendActivityStatement(verb: string): Promise<void> {
-    this._lrs?.saveStatements([this.prepareActivityStatement(verb)])
+    this._lrs?.saveStatements([this.prepareActivityStatement(verb)]);
   }
 
   async start(): Promise<void> {
     await this._authenticate();
-    await this.sendActivityStatement(VERB_INITIALIZED)
+    await this.sendActivityStatement(VERB_INITIALIZED);
   }
 
   async terminate(): Promise<void> {
-    throw new Error("not implemented");
+    await this.sendActivityStatement(VERB_TERMINATED);
   }
 }
 
