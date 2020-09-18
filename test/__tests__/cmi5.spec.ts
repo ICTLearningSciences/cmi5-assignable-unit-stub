@@ -1,4 +1,4 @@
-import { Cmi5, Cmi5Service } from "../../src/cmi5";
+import { Cmi5, Cmi5Service, VERB_INITIALIZED } from "../../src/cmi5";
 import { MockCmi5Helper, DEFAULT_CMI5_PARAMS } from "../helpers";
 import * as xapi from "../../src/xapi";
 jest.mock("../../src/xapi");
@@ -42,7 +42,7 @@ describe("Cmi5", () => {
 
   describe("start", () => {
     it("authenticates using the cmi5 fetch param", async () => {
-      const cmi5 = await start(mockCmi5)
+      const cmi5 = await start(mockCmi5);
       expect(cmi5.state.accessToken).toEqual(
         // the access token must have the format of Http basic auth
         Buffer.from(
@@ -56,12 +56,22 @@ describe("Cmi5", () => {
       // if we instead tested the actual headers
       // sent on subsequent xapi POST statements,
       // but much tricker to spy on XHR
-      await start(mockCmi5)
+      await start(mockCmi5);
       expect(mockCmi5.mockNewLrs).toHaveBeenCalledWith({
         endpoint: mockCmi5.endpoint,
         username: mockCmi5.accessTokenUsername,
         password: mockCmi5.accessTokenPassword,
       });
+    });
+    it("posts cmi5 INITIALIZED statement", async () => {
+      await start(mockCmi5);
+      expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
+        expect.objectContaining({
+          verb: expect.objectContaining({
+            id: VERB_INITIALIZED,
+          }),
+        }),
+      ]);
     });
 
     // it("sends the cmi5 initialized statement", async () => {

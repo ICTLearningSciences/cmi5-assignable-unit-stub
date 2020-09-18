@@ -8,7 +8,7 @@ Restrictions Notice/Marking: The Government's rights to use, modify, reproduce, 
 
 No Commercial Use: This software shall be used for government purposes only and shall not, without the express written permission of the party whose name appears in the restrictive legend, be used, modified, reproduced, released, performed, or displayed for any commercial purpose or disclosed to a person other than subcontractors, suppliers, or prospective subcontractors or suppliers, who require the software to submit offers for, or perform, government contracts.  Prior to disclosing the software, the Contractor shall require the persons to whom disclosure will be made to complete and sign the non-disclosure agreement at 227.7103-7.  (see DFARS 252.227-7025(b)(2))
 */
-import { Agent, Extensions, Verb } from "@gradiant/xapi-dsl";
+import { Agent, Extensions, Statement, Verb } from "@gradiant/xapi-dsl";
 import axios from "axios";
 import { LRS, newLrs } from "./xapi";
 
@@ -40,6 +40,8 @@ export interface Cmi5Service {
   readonly start: () => Promise<void>;
   readonly terminate: () => Promise<void>;
 }
+
+export const VERB_INITIALIZED = "http://adlnet.gov/expapi/verbs/initialized";
 
 // export enum Cmi5Status {
 //   NONE = "NONE",
@@ -119,8 +121,28 @@ class _CmiService implements Cmi5Service {
     });
   }
 
+  prepareActivityStatement(verb: string): Statement {
+    return {
+      actor: this.params.actor,
+      context: {
+        registration: this.params.registration
+      },
+      object: {
+        id: this.params.activityId
+      },
+      verb: {
+        id: verb
+      }
+    }
+  }
+
+  async sendActivityStatement(verb: string): Promise<void> {
+    this._lrs?.saveStatements([this.prepareActivityStatement(verb)])
+  }
+
   async start(): Promise<void> {
     await this._authenticate();
+    await this.sendActivityStatement(VERB_INITIALIZED)
   }
 
   async terminate(): Promise<void> {
