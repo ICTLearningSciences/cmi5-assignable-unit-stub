@@ -2,6 +2,7 @@ import {
   Cmi5,
   Cmi5Service,
   VERB_INITIALIZED,
+  VERB_PASSED,
   VERB_TERMINATED,
 } from "../../src/cmi5";
 import { MockCmi5Helper, DEFAULT_CMI5_PARAMS } from "../helpers";
@@ -14,6 +15,26 @@ async function start(mockCmi5: MockCmi5Helper): Promise<Cmi5Service> {
   const cmi5 = Cmi5.get();
   await cmi5.start();
   return cmi5;
+}
+
+function expectActivityStatement(
+  cmi5: Cmi5Service,
+  verb: string,
+  additionalProps: Record<string, any> = {}
+) {
+  return expect.objectContaining({
+    actor: cmi5.params.actor,
+    context: expect.objectContaining({
+      registration: cmi5.params.registration,
+    }),
+    object: expect.objectContaining({
+      id: cmi5.params.activityId,
+    }),
+    verb: expect.objectContaining({
+      id: verb,
+    }),
+    ...(additionalProps || {}),
+  });
 }
 
 describe("Cmi5", () => {
@@ -69,11 +90,24 @@ describe("Cmi5", () => {
       });
     });
     it("posts cmi5 INITIALIZED statement", async () => {
-      await start(mockCmi5);
+      const cmi5 = await start(mockCmi5);
       expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
-        expect.objectContaining({
-          verb: expect.objectContaining({
-            id: VERB_INITIALIZED,
+        expectActivityStatement(cmi5, VERB_INITIALIZED),
+      ]);
+    });
+  });
+
+  describe("passed", () => {
+    it("posts cmi5 PASSED statement", async () => {
+      const cmi5 = await start(mockCmi5);
+      const score = 0.9;
+      cmi5.passed({ score: score });
+      expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
+        expectActivityStatement(cmi5, VERB_PASSED, {
+          result: expect.objectContaining({
+            score: expect.objectContaining({
+              scaled: score,
+            }),
           }),
         }),
       ]);
@@ -85,11 +119,7 @@ describe("Cmi5", () => {
       const cmi5 = await start(mockCmi5);
       cmi5.terminate();
       expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
-        expect.objectContaining({
-          verb: expect.objectContaining({
-            id: VERB_TERMINATED,
-          }),
-        }),
+        expectActivityStatement(cmi5, VERB_TERMINATED),
       ]);
     });
   });

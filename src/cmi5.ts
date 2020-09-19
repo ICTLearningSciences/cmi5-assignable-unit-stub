@@ -8,7 +8,14 @@ Restrictions Notice/Marking: The Government's rights to use, modify, reproduce, 
 
 No Commercial Use: This software shall be used for government purposes only and shall not, without the express written permission of the party whose name appears in the restrictive legend, be used, modified, reproduced, released, performed, or displayed for any commercial purpose or disclosed to a person other than subcontractors, suppliers, or prospective subcontractors or suppliers, who require the software to submit offers for, or perform, government contracts.  Prior to disclosing the software, the Contractor shall require the persons to whom disclosure will be made to complete and sign the non-disclosure agreement at 227.7103-7.  (see DFARS 252.227-7025(b)(2))
 */
-import { Agent, Extensions, Statement, Verb } from "@gradiant/xapi-dsl";
+import {
+  Agent,
+  Extensions,
+  Result,
+  Statement,
+  Score,
+  Verb,
+} from "@gradiant/xapi-dsl";
 import axios from "axios";
 import { LRS, newLrs } from "./xapi";
 
@@ -36,7 +43,7 @@ export interface Cmi5Service {
   readonly state: Cmi5State;
   // readonly completed: (extensions?: Extensions) => Promise<void>;
   // readonly failed: (score: number, extensions?: Extensions) => Promise<void>;
-  // readonly passed: (score: number, extensions?: Extensions) => Promise<void>;
+  readonly passed: (p: PassedParams) => Promise<void>;
   readonly start: () => Promise<void>;
   readonly terminate: () => Promise<void>;
 }
@@ -60,6 +67,18 @@ export const VERB_TERMINATED = "http://adlnet.gov/expapi/verbs/terminated";
 //   TERMINATE_FAILED = "TERMINATE_FAILED",
 // }
 
+interface PassedParams {
+  score: number | Score;
+  contextExtensions?: Extensions;
+  resultExtensions?: Extensions;
+}
+
+interface PrepareActivityStatementParams {
+  verb: string;
+  result?: Result;
+  contextExtensions?: Extensions;
+}
+
 function hasCmi5Params(p: URLSearchParams): boolean {
   return Boolean(
     // true if has all required cmi5 query params
@@ -69,6 +88,14 @@ function hasCmi5Params(p: URLSearchParams): boolean {
       p.get("registration") &&
       p.get("activityId")
   );
+}
+
+function toScore(s: number | Score): Score {
+  return !isNaN(Number(s))
+    ? {
+        scaled: Number(s),
+      }
+    : (s as Score);
 }
 
 class _CmiService implements Cmi5Service {
@@ -99,9 +126,55 @@ class _CmiService implements Cmi5Service {
   //   throw new Error("not implemented");
   // }
 
-  // async passed(score: number, extensions?: Extensions): Promise<void> {
-  //   throw new Error("not implemented");
-  // }
+  async passed(p: PassedParams): Promise<void> {
+    const s = this.prepareActivityStatement({
+      ...p,
+      verb: VERB_PASSED,
+      result: {
+        score: toScore(p.score),
+      },
+    });
+    console.log(`what is PASSED? ${JSON.stringify(s, null, 2)}`);
+    this._lrs?.saveStatements([
+      this.prepareActivityStatement({
+        ...p,
+        verb: VERB_PASSED,
+        result: {
+          score: toScore(p.score),
+        },
+      }),
+    ]);
+  }
+
+  prepareActivityStatement(p: PrepareActivityStatementParams): Statement {
+    return {
+      actor: this.params.actor,
+      context: {
+        registration: this.params.registration,
+        extensions: p.contextExtensions,
+      },
+      object: {
+        id: this.params.activityId,
+      },
+      verb: {
+        id: p.verb,
+      },
+      result: p.result,
+    };
+  }
+
+  async sendActivityStatement(verb: string): Promise<void> {
+    this._lrs?.saveStatements([this.prepareActivityStatement({ verb })]);
+  }
+
+  async start(): Promise<void> {
+    await this._authenticate();
+    await this.sendActivityStatement(VERB_INITIALIZED);
+  }
+
+  async terminate(): Promise<void> {
+    await this.sendActivityStatement(VERB_TERMINATED);
+  }
 
   async _authenticate(): Promise<void> {
     const res = await axios.post(this.params.fetch);
@@ -123,34 +196,6 @@ class _CmiService implements Cmi5Service {
       ...this._state,
       accessToken,
     });
-  }
-
-  prepareActivityStatement(verb: string): Statement {
-    return {
-      actor: this.params.actor,
-      context: {
-        registration: this.params.registration,
-      },
-      object: {
-        id: this.params.activityId,
-      },
-      verb: {
-        id: verb,
-      },
-    };
-  }
-
-  async sendActivityStatement(verb: string): Promise<void> {
-    this._lrs?.saveStatements([this.prepareActivityStatement(verb)]);
-  }
-
-  async start(): Promise<void> {
-    await this._authenticate();
-    await this.sendActivityStatement(VERB_INITIALIZED);
-  }
-
-  async terminate(): Promise<void> {
-    await this.sendActivityStatement(VERB_TERMINATED);
   }
 }
 
