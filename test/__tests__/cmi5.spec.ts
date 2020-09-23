@@ -1,9 +1,16 @@
 import {
   Cmi5,
   Cmi5Service,
+  STATE_LMS_LAUNCHDATA,
   VERB_INITIALIZED,
   VERB_PASSED,
+  VERB_FAILED,
+  VERB_COMPLETED,
   VERB_TERMINATED,
+  AUTH_STATUS_NONE,
+  AUTH_STATUS_SUCCESS,
+  AUTH_STATUS_FAILED,
+  ACTIVITY_STATUS_SUCCESS,
 } from "../../src/cmi5";
 import { MockCmi5Helper, DEFAULT_CMI5_PARAMS } from "../helpers";
 import * as xapi from "../../src/xapi";
@@ -12,6 +19,12 @@ jest.mock("../../src/xapi");
 async function start(mockCmi5: MockCmi5Helper): Promise<Cmi5Service> {
   mockCmi5.mockLocation();
   mockCmi5.mockFetch();
+  mockCmi5.mockFetchActivityState({
+    activityId: mockCmi5.activityId,
+    agent: mockCmi5.actor,
+    registration: mockCmi5.registration,
+    stateId: STATE_LMS_LAUNCHDATA,
+  });
   const cmi5 = Cmi5.get();
   await cmi5.start();
   return cmi5;
@@ -69,6 +82,7 @@ describe("Cmi5", () => {
   describe("start", () => {
     it("authenticates using the cmi5 fetch param", async () => {
       const cmi5 = await start(mockCmi5);
+      expect(cmi5.state.authStatus).toEqual(AUTH_STATUS_SUCCESS);
       expect(cmi5.state.accessToken).toEqual(
         // the access token must have the format of Http basic auth
         Buffer.from(
@@ -76,6 +90,18 @@ describe("Cmi5", () => {
           "ascii"
         ).toString("base64")
       );
+    });
+    it("updates AUTH_STATUS with auth failed", async () => {
+      mockCmi5.mockLocation();
+      mockCmi5.mockFetch(true);
+      const cmi5 = Cmi5.get();
+      expect(cmi5.state.authStatus).toEqual(AUTH_STATUS_NONE);
+      try {
+        await cmi5.start();
+        throw new Error();
+      } catch (e) {
+        expect(cmi5.state.authStatus).toEqual(AUTH_STATUS_FAILED);
+      }
     });
     it("initializes an lrs client with username and password from access token", async () => {
       // would be more end-to-end
@@ -89,11 +115,38 @@ describe("Cmi5", () => {
         password: mockCmi5.accessTokenPassword,
       });
     });
+    it("load the LMS LaunchData state document populated by the LMS", async () => {
+      const cmi5 = await start(mockCmi5);
+      expect(mockCmi5.mockFetchActivityState).toHaveBeenCalledWith({
+        activityId: mockCmi5.activityId,
+        agent: mockCmi5.actor,
+        registration: mockCmi5.registration,
+        stateId: STATE_LMS_LAUNCHDATA,
+      });
+      expect(cmi5.state.activityStatus).toBe(ACTIVITY_STATUS_SUCCESS);
+      expect(cmi5.state.lmsLaunchData).toMatchObject({
+        contextTemplate: {},
+        moveOn: "CompletedAndPassed",
+        masteryScore: 0.5,
+        returnURL: "/returnUrl",
+      });
+    });
     it("posts cmi5 INITIALIZED statement", async () => {
       const cmi5 = await start(mockCmi5);
       expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
         expectActivityStatement(cmi5, VERB_INITIALIZED),
       ]);
+    });
+    it("cmi5 start statement can only be sent once", async () => {
+      const cmi5 = await start(mockCmi5);
+      try {
+        await cmi5.start();
+        throw new Error();
+      } catch (e) {
+        expect(e.message).toBe(
+          "cannot issue multiple statements with Initialized"
+        );
+      }
     });
   });
 
@@ -105,9 +158,276 @@ describe("Cmi5", () => {
       expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
         expectActivityStatement(cmi5, VERB_PASSED, {
           result: expect.objectContaining({
+            success: true,
+            duration: expect.stringMatching(
+              /^(-?)P(?=\d|T\d)(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)([DW]))?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/
+            ),
             score: expect.objectContaining({
               scaled: score,
             }),
+          }),
+        }),
+      ]);
+    });
+    it("passed statement cannot be sent before init", async () => {
+      mockCmi5.mockLocation();
+      mockCmi5.mockFetch();
+      const cmi5 = Cmi5.get();
+      const score = 0.9;
+      try {
+        await cmi5.passed({ score: score });
+        throw new Error();
+      } catch (e) {
+        expect(e.message).toBe("not initialized");
+      }
+    });
+    it("passed statement can only be sent once", async () => {
+      const cmi5 = await start(mockCmi5);
+      const score = 0.9;
+      await cmi5.passed({ score: score });
+      try {
+        await cmi5.passed({ score: score });
+        throw new Error();
+      } catch (e) {
+        expect(e.message).toBe(
+          "only one passed statement is allowed per registration"
+        );
+      }
+    });
+  });
+
+  describe("failed", () => {
+    it("posts cmi5 FAILED statement", async () => {
+      const cmi5 = await start(mockCmi5);
+      const score = 0.1;
+      cmi5.failed({ score: score });
+      expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
+        expectActivityStatement(cmi5, VERB_FAILED, {
+          result: expect.objectContaining({
+            success: false,
+            duration: expect.stringMatching(
+              /^(-?)P(?=\d|T\d)(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)([DW]))?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/
+            ),
+            score: expect.objectContaining({
+              scaled: score,
+            }),
+          }),
+        }),
+      ]);
+    });
+    it("can send multiple failed statements", async () => {
+      const cmi5 = await start(mockCmi5);
+      await cmi5.failed({ score: 0.1 });
+      expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
+        expectActivityStatement(cmi5, VERB_FAILED, {
+          result: expect.objectContaining({
+            success: false,
+            score: expect.objectContaining({
+              scaled: 0.1,
+            }),
+          }),
+        }),
+      ]);
+      await cmi5.failed({ score: 0.2 });
+      expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
+        expectActivityStatement(cmi5, VERB_FAILED, {
+          result: expect.objectContaining({
+            success: false,
+            score: expect.objectContaining({
+              scaled: 0.2,
+            }),
+          }),
+        }),
+      ]);
+    });
+    it("failed statement cannot be sent before init", async () => {
+      mockCmi5.mockLocation();
+      mockCmi5.mockFetch();
+      const cmi5 = Cmi5.get();
+      const score = 0.9;
+      try {
+        await cmi5.failed({ score: score });
+        throw new Error();
+      } catch (e) {
+        expect(e.message).toBe("not initialized");
+      }
+    });
+    it("failed statement cannot be sent after passed", async () => {
+      const cmi5 = await start(mockCmi5);
+      const score = 0.9;
+      await cmi5.passed({ score: score });
+      try {
+        await cmi5.failed({ score: score });
+        throw new Error();
+      } catch (e) {
+        expect(e.message).toBe(
+          "a failed statement must not follow a passed statement"
+        );
+      }
+    });
+  });
+
+  describe("completed", () => {
+    it("posts cmi5 COMPLETED statement", async () => {
+      const cmi5 = await start(mockCmi5);
+      cmi5.completed();
+      expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
+        expectActivityStatement(cmi5, VERB_COMPLETED, {
+          result: expect.objectContaining({
+            success: true,
+            duration: expect.stringMatching(
+              /^(-?)P(?=\d|T\d)(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)([DW]))?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/
+            ),
+            score: expect.objectContaining({
+              scaled: 1,
+            }),
+            completion: true,
+          }),
+        }),
+      ]);
+    });
+    it("posts cmi5 COMPLETED statement after PASSED statement", async () => {
+      const cmi5 = await start(mockCmi5);
+      const score = 0.9;
+      cmi5.passed({ score: score });
+      cmi5.completed();
+      expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
+        expectActivityStatement(cmi5, VERB_COMPLETED, {
+          result: expect.objectContaining({
+            success: true,
+            duration: expect.stringMatching(
+              /^(-?)P(?=\d|T\d)(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)([DW]))?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/
+            ),
+            score: expect.objectContaining({
+              scaled: score,
+            }),
+            completion: true,
+          }),
+        }),
+      ]);
+    });
+    it("posts cmi5 COMPLETED statement after FAILED statement", async () => {
+      const cmi5 = await start(mockCmi5);
+      const score = 0.1;
+      cmi5.failed({ score: score });
+      cmi5.completed();
+      expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
+        expectActivityStatement(cmi5, VERB_COMPLETED, {
+          result: expect.objectContaining({
+            success: false,
+            duration: expect.stringMatching(
+              /^(-?)P(?=\d|T\d)(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)([DW]))?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/
+            ),
+            score: expect.objectContaining({
+              scaled: score,
+            }),
+            completion: true,
+          }),
+        }),
+      ]);
+    });
+    it("completed statement cannot be sent before init", async () => {
+      mockCmi5.mockLocation();
+      mockCmi5.mockFetch();
+      const cmi5 = Cmi5.get();
+      try {
+        await cmi5.completed();
+        throw new Error();
+      } catch (e) {
+        expect(e.message).toBe("not initialized");
+      }
+    });
+    it("completed statement can only be sent once", async () => {
+      const cmi5 = await start(mockCmi5);
+      await cmi5.completed();
+      try {
+        await cmi5.completed();
+        throw new Error();
+      } catch (e) {
+        expect(e.message).toBe(
+          "only one completed statement is allowed per registration"
+        );
+      }
+    });
+  });
+
+  describe("moveOn", () => {
+    it("moves on with CompletedAndPassed", async () => {
+      const cmi5 = await start(mockCmi5);
+      const score = 0.9;
+      await cmi5.moveOn({ score });
+      expect(cmi5.state.lmsLaunchData).toMatchObject({
+        contextTemplate: {},
+        moveOn: "CompletedAndPassed",
+        masteryScore: 0.5,
+        returnURL: "/returnUrl",
+      });
+      expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
+        expectActivityStatement(cmi5, VERB_PASSED, {
+          result: expect.objectContaining({
+            success: true,
+            duration: expect.stringMatching(
+              /^(-?)P(?=\d|T\d)(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)([DW]))?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/
+            ),
+            score: expect.objectContaining({
+              scaled: score,
+            }),
+          }),
+        }),
+      ]);
+      expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
+        expectActivityStatement(cmi5, VERB_COMPLETED, {
+          result: expect.objectContaining({
+            success: true,
+            duration: expect.stringMatching(
+              /^(-?)P(?=\d|T\d)(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)([DW]))?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/
+            ),
+            score: expect.objectContaining({
+              scaled: score,
+            }),
+            completion: true,
+          }),
+        }),
+      ]);
+      expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
+        expectActivityStatement(cmi5, VERB_TERMINATED, {
+          result: expect.objectContaining({
+            duration: expect.stringMatching(
+              /^(-?)P(?=\d|T\d)(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)([DW]))?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/
+            ),
+          }),
+        }),
+      ]);
+    });
+    it("fails with CompletedAndPassed", async () => {
+      const cmi5 = await start(mockCmi5);
+      const score = 0.1;
+      await cmi5.moveOn({ score });
+      expect(cmi5.state.lmsLaunchData).toMatchObject({
+        contextTemplate: {},
+        moveOn: "CompletedAndPassed",
+        masteryScore: 0.5,
+        returnURL: "/returnUrl",
+      });
+      expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
+        expectActivityStatement(cmi5, VERB_FAILED, {
+          result: expect.objectContaining({
+            success: false,
+            duration: expect.stringMatching(
+              /^(-?)P(?=\d|T\d)(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)([DW]))?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/
+            ),
+            score: expect.objectContaining({
+              scaled: score,
+            }),
+          }),
+        }),
+      ]);
+      expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
+        expectActivityStatement(cmi5, VERB_TERMINATED, {
+          result: expect.objectContaining({
+            duration: expect.stringMatching(
+              /^(-?)P(?=\d|T\d)(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)([DW]))?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/
+            ),
           }),
         }),
       ]);
@@ -119,8 +439,25 @@ describe("Cmi5", () => {
       const cmi5 = await start(mockCmi5);
       cmi5.terminate();
       expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
-        expectActivityStatement(cmi5, VERB_TERMINATED),
+        expectActivityStatement(cmi5, VERB_TERMINATED, {
+          result: expect.objectContaining({
+            duration: expect.stringMatching(
+              /^(-?)P(?=\d|T\d)(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)([DW]))?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/
+            ),
+          }),
+        }),
       ]);
+    });
+    it("terminated statement cannot be sent before init", async () => {
+      mockCmi5.mockLocation();
+      mockCmi5.mockFetch();
+      const cmi5 = Cmi5.get();
+      try {
+        await cmi5.terminate();
+        throw new Error();
+      } catch (e) {
+        expect(e.message).toBe("not initialized");
+      }
     });
   });
 });

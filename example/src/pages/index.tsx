@@ -8,17 +8,163 @@ Restrictions Notice/Marking: The Government's rights to use, modify, reproduce, 
 
 No Commercial Use: This software shall be used for government purposes only and shall not, without the express written permission of the party whose name appears in the restrictive legend, be used, modified, reproduced, released, performed, or displayed for any commercial purpose or disclosed to a person other than subcontractors, suppliers, or prospective subcontractors or suppliers, who require the software to submit offers for, or perform, government contracts.  Prior to disclosing the software, the Contractor shall require the persons to whom disclosure will be made to complete and sign the non-disclosure agreement at 227.7103-7.  (see DFARS 252.227-7025(b)(2))
 */
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Helmet from "react-helmet";
-import ExampleQuestion from "components/example-question";
+import {
+  Button,
+  List,
+  ListItem,
+  ListItemText,
+  TextField,
+  Typography,
+} from "@material-ui/core";
+import { useCmi } from "../api";
 
 export default function Index() {
+  const [cmi, cmiStart, cmiPass, cmiFail, cmiComplete, cmiTerminate] = useCmi();
+  const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    cmiStart();
+  }, []);
+
+  function onInput(e) {
+    if (isNaN(e.target.value)) {
+      return;
+    }
+    setScore(e.target.value);
+  }
+
+  function onPass() {
+    cmiPass(score);
+    cmiComplete();
+    cmiTerminate();
+  }
+
+  function onFail() {
+    cmiFail(score);
+    cmiComplete();
+    cmiTerminate();
+  }
+
+  function cmiParam(search: URLSearchParams, p: string) {
+    const param = search.get(p);
+    if (!param) {
+      return <Typography color="error">Missing cmi5 parameter {p}</Typography>;
+    }
+    return (
+      <Typography>
+        {p}: {param}
+      </Typography>
+    );
+  }
+
+  function checkParams() {
+    const search = typeof window === undefined ? "" : window.location.search;
+    const p = new URLSearchParams(search);
+    return (
+      <Typography id="cmi5-params" variant="h5" style={{ padding: 15 }}>
+        cmi5 params:
+        {cmiParam(p, "actor")}
+        {cmiParam(p, "activityId")}
+        {cmiParam(p, "endpoint")}
+        {cmiParam(p, "fetch")}
+        {cmiParam(p, "registration")}
+      </Typography>
+    );
+  }
+
+  function authStatus() {
+    if (!cmi.authStatus) {
+      return;
+    }
+    return (
+      <Typography id="auth" variant="h5" style={{ padding: 15 }}>
+        Auth
+        <Typography>Status: {cmi.authStatus}</Typography>
+        <Typography>Token: {cmi.accessToken}</Typography>
+      </Typography>
+    );
+  }
+
+  function activityStatus() {
+    if (!cmi.activityStatus) {
+      return;
+    }
+    const lms = cmi.lmsLaunchData;
+    console.log(lms);
+    return (
+      <Typography id="activity" variant="h5" style={{ padding: 15 }}>
+        Activity State:
+        <Typography>Status: {cmi.activityStatus}</Typography>
+        <Typography>
+          moveOn: {lms.moveOn ? lms.moveOn : "NotApplicable"}
+        </Typography>
+        <Typography>masteryScore: {lms.masteryScore}</Typography>
+        <Typography>returnURL: {lms.returnUrl}</Typography>
+      </Typography>
+    );
+  }
+
+  function grade() {
+    if (!cmi.start) {
+      return;
+    }
+    const started = cmi.start.toISOString();
+    return (
+      <div id="grade" style={{ padding: 15 }}>
+        <Typography variant="h5">Score:</Typography>
+        <TextField id="score" onChange={onInput} value={score} />
+        <Button id="pass" variant="contained" onClick={onPass}>
+          Pass
+        </Button>
+        <Button
+          id="fail"
+          variant="contained"
+          onClick={onFail}
+          style={{ marginLeft: 15 }}
+        >
+          Fail
+        </Button>
+        <Typography>Started: {started}</Typography>
+      </div>
+    );
+  }
+
+  function statements() {
+    if (!cmi.statements) {
+      return;
+    }
+    return (
+      <Typography id="statements" variant="h5" style={{ padding: 15 }}>
+        Statements:
+        <List>
+          {cmi.statements.map((s, i) => {
+            return (
+              <ListItem key={`${i}`}>
+                <ListItemText
+                  primary={`VERB: ${s.verb.id}`}
+                  secondary={`RESULT: ${JSON.stringify(s.result)}`}
+                />
+              </ListItem>
+            );
+          })}
+        </List>
+      </Typography>
+    );
+  }
+
   return (
     <div>
       <Helmet>
         <script src={"cmi5.js"} type="text/javascript" />
       </Helmet>
-      <ExampleQuestion />
+      {checkParams()}
+      {authStatus()}
+      {activityStatus()}
+      {grade()}
+      {statements()}
+      <Typography></Typography>
     </div>
   );
 }

@@ -17,7 +17,9 @@ import {
   Verb,
 } from "@gradiant/xapi-dsl";
 import axios from "axios";
-import { LRS, newLrs } from "./xapi";
+import { LRS, newLrs, ActivityState } from "./xapi";
+import moment from "moment";
+moment().format();
 
 let _url = "";
 let _cmi: Cmi5Service | null = null;
@@ -35,37 +37,42 @@ export interface Cmi5Params {
 }
 
 export interface Cmi5State {
+  statements: Statement[];
+  start?: Date;
+  authStatus: string;
   accessToken: string;
+  activityStatus: string;
+  lmsLaunchData: ActivityState;
 }
 
 export interface Cmi5Service {
   readonly params: Cmi5Params;
   readonly state: Cmi5State;
-  // readonly completed: (extensions?: Extensions) => Promise<void>;
-  // readonly failed: (score: number, extensions?: Extensions) => Promise<void>;
-  readonly passed: (p: PassedParams) => Promise<void>;
   readonly start: () => Promise<void>;
+  readonly moveOn: (p: PassedParams) => Promise<void>;
+  readonly passed: (p: PassedParams) => Promise<void>;
+  readonly failed: (p: PassedParams) => Promise<void>;
+  readonly completed: (extensions?: Extensions) => Promise<void>;
   readonly terminate: () => Promise<void>;
 }
 
-export const VERB_COMPLETED = "http://adlnet.gov/expapi/verbs/completed";
-export const VERB_FAILED = "http://adlnet.gov/expapi/verbs/failed";
+export const STATE_LMS_LAUNCHDATA = "LMS.LaunchData";
+
 export const VERB_INITIALIZED = "http://adlnet.gov/expapi/verbs/initialized";
 export const VERB_PASSED = "http://adlnet.gov/expapi/verbs/passed";
+export const VERB_COMPLETED = "http://adlnet.gov/expapi/verbs/completed";
+export const VERB_FAILED = "http://adlnet.gov/expapi/verbs/failed";
 export const VERB_TERMINATED = "http://adlnet.gov/expapi/verbs/terminated";
 
-// export enum Cmi5Status {
-//   NONE = "NONE",
-//   START_IN_PROGRESS = "START_IN_PROGRESS",
-//   STARTED = "STARTED",
-//   START_FAILED = "START_FAILED",
-//   COMPLETE_IN_PROGRESS = "COMPLETE_IN_PROGRESS",
-//   COMPLETED = "COMPLETED",
-//   COMPLETE_FAILED = "COMPLETE_FAILED",
-//   TERMINATE_IN_PROGRESS = "TERMINATE_IN_PROGRESS",
-//   TERMINATED = "TERMINATED",
-//   TERMINATE_FAILED = "TERMINATE_FAILED",
-// }
+export const AUTH_STATUS_NONE = "NONE";
+export const AUTH_STATUS_IN_PROGRESS = "IN_PROGRESS";
+export const AUTH_STATUS_SUCCESS = "SUCCESS";
+export const AUTH_STATUS_FAILED = "FAILED";
+
+export const ACTIVITY_STATUS_NONE = "NONE";
+export const ACTIVITY_STATUS_IN_PROGRESS = "LOAD_IN_PROGRESS";
+export const ACTIVITY_STATUS_SUCCESS = "LOADED";
+export const ACTIVITY_STATUS_FAILED = "FAILED";
 
 interface PassedParams {
   score: number | Score;
@@ -106,7 +113,12 @@ class _CmiService implements Cmi5Service {
   constructor(params: Cmi5Params) {
     this.params = params;
     this._state = {
+      statements: [],
+      start: undefined,
+      authStatus: AUTH_STATUS_NONE,
       accessToken: "",
+      activityStatus: ACTIVITY_STATUS_NONE,
+      lmsLaunchData: {},
     };
   }
 
@@ -118,38 +130,14 @@ class _CmiService implements Cmi5Service {
     this._state = s;
   }
 
-  // async completed(extensions?: Extensions): Promise<void> {
-  //   throw new Error("not implemented");
-  // }
-
-  // async failed(score: number, extensions?: Extensions): Promise<void> {
-  //   throw new Error("not implemented");
-  // }
-
-  async passed(p: PassedParams): Promise<void> {
-    const s = this.prepareActivityStatement({
-      ...p,
-      verb: VERB_PASSED,
-      result: {
-        score: toScore(p.score),
-      },
-    });
-    console.log(`what is PASSED? ${JSON.stringify(s, null, 2)}`);
-    this._lrs?.saveStatements([
-      this.prepareActivityStatement({
-        ...p,
-        verb: VERB_PASSED,
-        result: {
-          score: toScore(p.score),
-        },
-      }),
-    ]);
-  }
-
   prepareActivityStatement(p: PrepareActivityStatementParams): Statement {
+    const context = this.state.lmsLaunchData
+      ? this.state.lmsLaunchData.contextTemplate || {}
+      : {};
     return {
       actor: this.params.actor,
       context: {
+        ...context,
         registration: this.params.registration,
         extensions: p.contextExtensions,
       },
@@ -163,23 +151,171 @@ class _CmiService implements Cmi5Service {
     };
   }
 
-  async sendActivityStatement(verb: string): Promise<void> {
-    this._lrs?.saveStatements([this.prepareActivityStatement({ verb })]);
+  async sendActivityStatement(
+    p: PrepareActivityStatementParams
+  ): Promise<void> {
+    const statement = this.prepareActivityStatement({ ...p });
+    this._lrs?.saveStatements([statement]);
+    this.updateState({
+      ...this._state,
+      statements: [...this.state.statements, statement],
+    });
   }
 
   async start(): Promise<void> {
+    if (this.state.statements.find((s) => s.verb.id === VERB_INITIALIZED)) {
+      throw new Error("cannot issue multiple statements with Initialized");
+    }
     await this._authenticate();
-    await this.sendActivityStatement(VERB_INITIALIZED);
+    await this._loadLMSLaunchData();
+    await this.sendActivityStatement({ verb: VERB_INITIALIZED });
+    this.updateState({
+      ...this._state,
+      start: new Date(),
+    });
+  }
+
+  async passed(p: PassedParams): Promise<void> {
+    if (this.state.start == undefined) {
+      throw new Error("not initialized");
+    }
+    if (this.state.statements.find((s) => s.verb.id === VERB_PASSED)) {
+      throw new Error("only one passed statement is allowed per registration");
+    }
+    const duration = moment.duration(
+      new Date().getTime() - this.state.start.getTime()
+    );
+    await this.sendActivityStatement({
+      verb: VERB_PASSED,
+      contextExtensions: p.contextExtensions,
+      result: {
+        success: true,
+        duration: duration.toISOString(),
+        score: toScore(p.score),
+      },
+    });
+  }
+
+  async failed(p: PassedParams): Promise<void> {
+    if (!this.state.start) {
+      throw new Error("not initialized");
+    }
+    if (this.state.statements.find((s) => s.verb.id === VERB_PASSED)) {
+      throw new Error("a failed statement must not follow a passed statement");
+    }
+    const duration = moment.duration(
+      new Date().getTime() - this.state.start.getTime()
+    );
+    await this.sendActivityStatement({
+      verb: VERB_FAILED,
+      contextExtensions: p.contextExtensions,
+      result: {
+        success: false,
+        duration: duration.toISOString(),
+        score: toScore(p.score),
+      },
+    });
+  }
+
+  async completed(extensions?: Extensions): Promise<void> {
+    if (!this.state.start) {
+      throw new Error("not initialized");
+    }
+    if (this.state.statements.find((s) => s.verb.id === VERB_COMPLETED)) {
+      throw new Error(
+        "only one completed statement is allowed per registration"
+      );
+    }
+    const duration = moment.duration(
+      new Date().getTime() - this.state.start.getTime()
+    );
+    const s = this.state.statements.find(
+      (s) => s.verb.id === VERB_PASSED || s.verb.id === VERB_FAILED
+    );
+    await this.sendActivityStatement({
+      ...extensions,
+      verb: VERB_COMPLETED,
+      result: {
+        success: s ? s.verb.id === VERB_PASSED : true,
+        duration: duration.toISOString(),
+        score: s ? s.result?.score : { scaled: 1 },
+        completion: true,
+      },
+    });
+  }
+
+  async moveOn(p: PassedParams): Promise<void> {
+    if (!this.state.start) {
+      throw new Error("not initialized");
+    }
+    if (!this.state.lmsLaunchData) {
+      throw new Error("no LMS data");
+    }
+    const lms = this.state.lmsLaunchData;
+    const masteryScore = lms.masteryScore || 0;
+    const moveOn = lms.moveOn || "NotApplicable";
+    const passed = p.score >= masteryScore;
+
+    if (!passed) {
+      await this.failed(p);
+    }
+    switch (moveOn) {
+      case "Passed":
+        if (!passed) {
+          break;
+        }
+        await this.passed(p);
+        break;
+      case "Completed":
+        await this.completed(p.contextExtensions);
+        break;
+      case "CompletedAndPassed":
+        if (!passed) {
+          break;
+        }
+        await this.passed(p);
+        await this.completed(p.contextExtensions);
+        break;
+      case "CompletedOrPassed":
+        if (passed) {
+          await this.passed(p);
+        } else {
+          await this.completed(p.contextExtensions);
+        }
+        break;
+      default:
+    }
+    await this.terminate();
   }
 
   async terminate(): Promise<void> {
-    await this.sendActivityStatement(VERB_TERMINATED);
+    if (!this.state.start) {
+      throw new Error("not initialized");
+    }
+    if (this.state.statements.find((s) => s.verb.id === VERB_TERMINATED)) {
+      return;
+    }
+    const duration = moment.duration(
+      new Date().getTime() - this.state.start.getTime()
+    );
+    await this.sendActivityStatement({
+      verb: VERB_TERMINATED,
+      result: { duration: duration.toISOString() },
+    });
   }
 
   async _authenticate(): Promise<void> {
+    this.updateState({
+      ...this._state,
+      authStatus: AUTH_STATUS_IN_PROGRESS,
+    });
     const res = await axios.post(this.params.fetch);
     const accessToken = res.data["auth-token"];
     if (!accessToken) {
+      this.updateState({
+        ...this._state,
+        authStatus: AUTH_STATUS_FAILED,
+      });
       throw new Error(
         `invalid response from fetch ${this.params.fetch}: ${res.data}`
       );
@@ -194,7 +330,41 @@ class _CmiService implements Cmi5Service {
     });
     this.updateState({
       ...this._state,
+      authStatus: AUTH_STATUS_SUCCESS,
       accessToken,
+    });
+  }
+
+  /**
+   * Method to load the LMS.LaunchData state document populated by the LMS
+   * Fetch data has to have already been loaded, in order to have LRS credential.
+   */
+  async _loadLMSLaunchData(): Promise<void> {
+    if (!this.state.accessToken) {
+      throw new Error("fetch data LRS credential was not loaded");
+    }
+    this.updateState({
+      ...this._state,
+      activityStatus: ACTIVITY_STATUS_IN_PROGRESS,
+    });
+    const res = await this._lrs?.fetchActivityState({
+      stateId: STATE_LMS_LAUNCHDATA,
+      activityId: this.params.activityId,
+      agent: this.params.actor,
+      registration: this.params.registration,
+    });
+    if (!res) {
+      this.updateState({
+        ...this._state,
+        activityStatus: ACTIVITY_STATUS_FAILED,
+      });
+      return;
+      //   throw new Error(`invalid response from load LMS launch data: ${res}`);
+    }
+    this.updateState({
+      ...this._state,
+      activityStatus: ACTIVITY_STATUS_SUCCESS,
+      lmsLaunchData: res,
     });
   }
 }

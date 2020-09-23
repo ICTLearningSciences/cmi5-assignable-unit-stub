@@ -21,14 +21,14 @@
     "pack:latest": "npm run build && npm pack && cp ${npm_package_name}-${npm_package_version}.tgz ${npm_package_name}-latest.tgz",
     "postinstall": "node ./scripts/postinstall.js",
     "postversion": "git push && git push --tags",
-    "test": "jest",
+    "test": "jest test/*",
     "test:all": "npx run test:format && npx run test:lint && npx run test:audit && npx run test:types && npx run test:cypress && npx test",
     "test:audit": "npm audit --level=moderate",
     "test:format": "prettier --check '**/*.{js,jsx,json,ts,tsx}'",
     "test:license": "npx license-check-and-add check -f license-config.json",
     "test:lint": "eslint src --ext ts --ext tsx --ext js --ext jsx",
     "test:types": "tsc --noEmit",
-    "test:watch": "jest --watch"
+    "test:watch": "jest test/* --watch"
   },
   "repository": {
     "type": "git",
@@ -53,6 +53,7 @@
   "devDependencies": {
     "@babel/core": "^7.11.6",
     "@rollup/plugin-commonjs": "^15.0.0",
+    "@rollup/plugin-json": "^4.1.0",
     "@rollup/plugin-node-resolve": "^9.0.0",
     "@testing-library/jest-dom": "^5.11.4",
     "@testing-library/react": "^11.0.4",
@@ -93,6 +94,7 @@
     "app-root-path": "^3.0.0",
     "axios": "^0.20.0",
     "fs-extra": "^9.0.1",
+    "moment": "^2.29.0",
     "tincanjs": "^0.50.0"
   },
   "jest": {

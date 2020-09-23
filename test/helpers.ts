@@ -1,7 +1,6 @@
 import { Agent } from "@gradiant/xapi-dsl";
 // import xhrMock from "xhr-mock";
-import { Cmi5, Cmi5Params } from "../src/cmi5";
-import { newLrs } from "../src/xapi";
+import { Cmi5Params } from "../src/cmi5";
 import MockAxios from "axios-mock-adapter";
 import axios from "axios";
 import * as xapi from "../src/xapi";
@@ -45,6 +44,7 @@ export class MockCmi5Helper {
   locationOriginal?: Location;
   mockAxios: MockAxios;
   mockNewLrs: jest.Mock;
+  mockFetchActivityState: jest.Mock;
   mockSaveStatements: jest.Mock;
   _isMockSetup = false;
 
@@ -58,9 +58,15 @@ export class MockCmi5Helper {
     this.locationOriginal = window.location;
     this.mockAxios = new MockAxios(axios);
     this.mockNewLrs = xapi.newLrs as jest.Mock;
+    this.mockFetchActivityState = jest.fn(
+      (params: xapi.FetchActivityStateParams) => {
+        return this.mockActivityState(params);
+      }
+    );
     this.mockSaveStatements = jest.fn();
     this.mockNewLrs.mockImplementation(() => {
       return {
+        fetchActivityState: this.mockFetchActivityState,
         saveStatements: this.mockSaveStatements,
       };
     });
@@ -84,11 +90,28 @@ export class MockCmi5Helper {
     _setWindowLocation(this.url);
   }
 
-  mockFetch(): void {
+  mockFetch(fail = false): void {
+    if (fail) {
+      this.mockAxios.onPost(this.fetch).reply(200, { "auth-token": null });
+      return;
+    }
     this.mockAxios.onPost(this.fetch).reply(200, {
       "auth-token": Buffer.from(
         `${this.accessTokenUsername}:${this.accessTokenPassword}`
       ).toString("base64"),
+    });
+  }
+
+  mockActivityState(
+    params: xapi.FetchActivityStateParams
+  ): Promise<xapi.ActivityState> {
+    return new Promise((resolve, reject) => {
+      resolve({
+        contextTemplate: {},
+        moveOn: "CompletedAndPassed",
+        masteryScore: 0.5,
+        returnURL: "/returnUrl",
+      });
     });
   }
 
