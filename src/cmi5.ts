@@ -45,9 +45,19 @@ export interface Cmi5State {
   lmsLaunchData: ActivityState;
 }
 
+
+interface CmiStateUpdateCallback {
+  (): void;
+}
+
+interface Unregister {
+  (): void;
+}
+
 export interface Cmi5Service {
   readonly params: Cmi5Params;
   readonly state: Cmi5State;
+  readonly onStateUpdate: (cb: CmiStateUpdateCallback) => Unregister;
   readonly start: () => Promise<void>;
   readonly moveOn: (p: PassedParams) => Promise<void>;
   readonly passed: (p: PassedParams) => Promise<void>;
@@ -109,6 +119,7 @@ class _CmiService implements Cmi5Service {
   readonly params: Cmi5Params;
   _state: Cmi5State;
   _lrs: LRS | null = null;
+  _onStateUpdateObservers: CmiStateUpdateCallback[] = []
 
   constructor(params: Cmi5Params) {
     this.params = params;
@@ -124,6 +135,19 @@ class _CmiService implements Cmi5Service {
 
   get state(): Cmi5State {
     return this._state;
+  }
+
+  onStateUpdate(cb: CmiStateUpdateCallback): Unregister
+  {
+    if(!this._onStateUpdateObservers.includes(cb)) {
+      this._onStateUpdateObservers.push(cb)
+    }
+    return () => {
+      const rmIx = this._onStateUpdateObservers.indexOf(cb)
+      if(rmIx !== -1) {
+        this._onStateUpdateObservers.splice(rmIx)
+      }
+    }
   }
 
   updateState(s: Cmi5State): void {

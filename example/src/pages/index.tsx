@@ -32,8 +32,13 @@ export default function Index() {
     cmiTerminate,
   ] = useCmi();
   const [score, setScore] = useState(0);
+  // const [state, setState] = useState(Cmi5.get().state)
 
   useEffect(() => {
+    // Cmi5.get().onStateUpdate(() => {
+    //   setState(Cmi5.get().state)
+    // })
+    // Cmi5.get().start()
     cmiStart();
   }, []);
 
