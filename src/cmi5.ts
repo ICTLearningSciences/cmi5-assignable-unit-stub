@@ -358,8 +358,7 @@ class _CmiService implements Cmi5Service {
         ...this._state,
         activityStatus: ACTIVITY_STATUS_FAILED,
       });
-      return;
-      //   throw new Error(`invalid response from load LMS launch data: ${res}`);
+      throw new Error(`invalid response from load LMS launch data: ${res}`);
     }
     this.updateState({
       ...this._state,

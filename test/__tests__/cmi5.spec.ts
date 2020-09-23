@@ -91,7 +91,7 @@ describe("Cmi5", () => {
         ).toString("base64")
       );
     });
-    it("updates AUTH_STATUS with auth failed", async () => {
+    it("updates AUTH_STATUS if auth failed", async () => {
       mockCmi5.mockLocation();
       mockCmi5.mockFetch(true);
       const cmi5 = Cmi5.get();
@@ -352,7 +352,7 @@ describe("Cmi5", () => {
   });
 
   describe("moveOn", () => {
-    it("moves on with CompletedAndPassed", async () => {
+    it("passes and completes with CompletedAndPassed", async () => {
       const cmi5 = await start(mockCmi5);
       const score = 0.9;
       await cmi5.moveOn({ score });
@@ -399,7 +399,7 @@ describe("Cmi5", () => {
         }),
       ]);
     });
-    it("fails with CompletedAndPassed", async () => {
+    it("fails CompletedAndPassed if score < masteryScore", async () => {
       const cmi5 = await start(mockCmi5);
       const score = 0.1;
       await cmi5.moveOn({ score });

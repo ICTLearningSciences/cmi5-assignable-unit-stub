@@ -43,6 +43,7 @@ describe("Cmi5 example", () => {
     cy.route(DEFAULT_CMI5_PARAMS.fetch, {
       "auth-token": Buffer.from(`testuser:testpassword`).toString("base64"),
     }).as("fetch");
+
     cy.visit(url());
     cy.wait("@fetch").then((xhr) => {
       console.log(xhr);

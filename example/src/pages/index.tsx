@@ -18,10 +18,19 @@ import {
   TextField,
   Typography,
 } from "@material-ui/core";
+import { Cmi5 } from "react-cmi5-context";
 import { useCmi } from "../api";
 
 export default function Index() {
-  const [cmi, cmiStart, cmiPass, cmiFail, cmiComplete, cmiTerminate] = useCmi();
+  const [
+    cmi,
+    cmiStart,
+    cmiPass,
+    cmiFail,
+    cmiComplete,
+    cmiMoveOn,
+    cmiTerminate,
+  ] = useCmi();
   const [score, setScore] = useState(0);
 
   useEffect(() => {
@@ -32,7 +41,14 @@ export default function Index() {
     if (isNaN(e.target.value)) {
       return;
     }
+    if (parseFloat(e.target.value) > 1) {
+      return;
+    }
     setScore(e.target.value);
+  }
+
+  function onMoveOn() {
+    cmiMoveOn(score);
   }
 
   function onPass() {
@@ -91,8 +107,7 @@ export default function Index() {
     if (!cmi.activityStatus) {
       return;
     }
-    const lms = cmi.lmsLaunchData;
-    console.log(lms);
+    const lms = cmi.lmsLaunchData.contents;
     return (
       <Typography id="activity" variant="h5" style={{ padding: 15 }}>
         Activity State:
@@ -101,7 +116,7 @@ export default function Index() {
           moveOn: {lms.moveOn ? lms.moveOn : "NotApplicable"}
         </Typography>
         <Typography>masteryScore: {lms.masteryScore}</Typography>
-        <Typography>returnURL: {lms.returnUrl}</Typography>
+        <Typography>returnURL: {lms.returnURL}</Typography>
       </Typography>
     );
   }
@@ -111,11 +126,30 @@ export default function Index() {
       return;
     }
     const started = cmi.start.toISOString();
+    const lms = cmi.lmsLaunchData.contents;
+    const mastery: number = lms.masteryScore || 0;
+    const moveOn: string = lms.moveOn || "NotApplicable";
+    
     return (
       <div id="grade" style={{ padding: 15 }}>
         <Typography variant="h5">Score:</Typography>
         <TextField id="score" onChange={onInput} value={score} />
-        <Button id="pass" variant="contained" onClick={onPass}>
+        <Button
+          id="moveon"
+          variant="contained"
+          onClick={onMoveOn}
+          style={{ marginLeft: 15 }}
+          disabled={moveOn == "NotApplicable"}
+        >
+          Move On
+        </Button>
+        <Button
+          id="pass"
+          variant="contained"
+          onClick={onPass}
+          style={{ marginLeft: 15 }}
+          disabled={score < mastery}
+        >
           Pass
         </Button>
         <Button
@@ -152,6 +186,10 @@ export default function Index() {
         </List>
       </Typography>
     );
+  }
+
+  if (!Cmi5.isCmiAvailable) {
+    return checkParams();
   }
 
   return (

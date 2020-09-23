@@ -33,7 +33,9 @@ export function useCmi() {
     } catch (e) {
       console.error(`cmi5 start failed: ${e}`);
     }
-    setCmiState({ ...cmi5.state });
+    if (cmi5) {
+      setCmiState({ ...cmi5.state });
+    }
   }
 
   async function passed(
@@ -74,6 +76,20 @@ export function useCmi() {
     setCmiState({ ...cmi5.state });
   }
 
+  async function moveOn(
+    score: number,
+    contextExtensions = {},
+    resultExtensions = {}
+  ) {
+    try {
+      cmi5 = Cmi5.get();
+      await cmi5.moveOn({ score, contextExtensions, resultExtensions });
+    } catch (e) {
+      console.error(`cmi5 moveOn failed: ${e}`);
+    }
+    setCmiState({ ...cmi5.state });
+  }
+
   async function terminate() {
     try {
       cmi5 = Cmi5.get();
@@ -84,7 +100,7 @@ export function useCmi() {
     setCmiState({ ...cmi5.state });
   }
 
-  return [cmiState, start, passed, failed, completed, terminate];
+  return [cmiState, start, passed, failed, completed, moveOn, terminate];
 }
 
 export default useCmi;
