@@ -129,7 +129,7 @@ export default function Index() {
     const lms = cmi.lmsLaunchData.contents;
     const mastery: number = lms.masteryScore || 0;
     const moveOn: string = lms.moveOn || "NotApplicable";
-    
+
     return (
       <div id="grade" style={{ padding: 15 }}>
         <Typography variant="h5">Score:</Typography>
