@@ -19,27 +19,21 @@ import {
   Typography,
 } from "@material-ui/core";
 import { Cmi5 } from "react-cmi5-context";
-import { useCmi } from "../api";
 
 export default function Index() {
-  const [
-    cmi,
-    cmiStart,
-    cmiPass,
-    cmiFail,
-    cmiComplete,
-    cmiMoveOn,
-    cmiTerminate,
-  ] = useCmi();
   const [score, setScore] = useState(0);
-  // const [state, setState] = useState(Cmi5.get().state)
+  const [state, setState] = useState();
 
   useEffect(() => {
-    // Cmi5.get().onStateUpdate(() => {
-    //   setState(Cmi5.get().state)
-    // })
-    // Cmi5.get().start()
-    cmiStart();
+    try {
+      const cmi5 = Cmi5.get();
+      cmi5.onStateUpdate(() => {
+        setState(Cmi5.get().state);
+      });
+      cmi5.start();
+    } catch (e) {
+      console.error(e);
+    }
   }, []);
 
   function onInput(e) {
@@ -53,19 +47,21 @@ export default function Index() {
   }
 
   function onMoveOn() {
-    cmiMoveOn(score);
+    Cmi5.get().moveOn({ score });
   }
 
   function onPass() {
-    cmiPass(score);
-    cmiComplete();
-    cmiTerminate();
+    const cmi5 = Cmi5.get();
+    cmi5.passed({ score });
+    cmi5.completed();
+    cmi5.terminate();
   }
 
   function onFail() {
-    cmiFail(score);
-    cmiComplete();
-    cmiTerminate();
+    const cmi5 = Cmi5.get();
+    cmi5.failed({ score });
+    cmi5.completed();
+    cmi5.terminate();
   }
 
   function cmiParam(search: URLSearchParams, p: string) {
@@ -81,7 +77,7 @@ export default function Index() {
   }
 
   function checkParams() {
-    const search = typeof window === undefined ? "" : window.location.search;
+    const search = typeof window === "undefined" ? "" : window.location.search;
     const p = new URLSearchParams(search);
     return (
       <Typography id="cmi5-params" variant="h5" style={{ padding: 15 }}>
@@ -96,42 +92,43 @@ export default function Index() {
   }
 
   function authStatus() {
-    if (!cmi.authStatus) {
+    if (!state.authStatus) {
       return;
     }
     return (
       <Typography id="auth" variant="h5" style={{ padding: 15 }}>
         Auth
-        <Typography>Status: {cmi.authStatus}</Typography>
-        <Typography>Token: {cmi.accessToken}</Typography>
+        <Typography>Status: {state.authStatus}</Typography>
+        <Typography>Token: {state.accessToken}</Typography>
       </Typography>
     );
   }
 
   function activityStatus() {
-    if (!cmi.activityStatus) {
+    if (!state.activityStatus) {
       return;
     }
-    const lms = cmi.lmsLaunchData.contents;
+    const lms = state.lmsLaunchData.contents;
+    const moveOn = lms ? lms.moveOn : "NotApplicable";
+    const masteryScore = lms ? lms.masteryScore : "n/a";
+    const returnURL = lms ? lms.returnURL : "n/a";
     return (
       <Typography id="activity" variant="h5" style={{ padding: 15 }}>
         Activity State:
-        <Typography>Status: {cmi.activityStatus}</Typography>
-        <Typography>
-          moveOn: {lms.moveOn ? lms.moveOn : "NotApplicable"}
-        </Typography>
-        <Typography>masteryScore: {lms.masteryScore}</Typography>
-        <Typography>returnURL: {lms.returnURL}</Typography>
+        <Typography>Status: {state.activityStatus}</Typography>
+        <Typography>moveOn: {moveOn}</Typography>
+        <Typography>masteryScore: {masteryScore}</Typography>
+        <Typography>returnURL: {returnURL}</Typography>
       </Typography>
     );
   }
 
   function grade() {
-    if (!cmi.start) {
+    if (!state.start) {
       return;
     }
-    const started = cmi.start.toISOString();
-    const lms = cmi.lmsLaunchData.contents;
+    const started = state.start.toISOString();
+    const lms = state.lmsLaunchData.contents || {};
     const mastery: number = lms.masteryScore || 0;
     const moveOn: string = lms.moveOn || "NotApplicable";
 
@@ -171,14 +168,14 @@ export default function Index() {
   }
 
   function statements() {
-    if (!cmi.statements) {
+    if (!state.statements) {
       return;
     }
     return (
       <Typography id="statements" variant="h5" style={{ padding: 15 }}>
         Statements:
         <List>
-          {cmi.statements.map((s, i) => {
+          {state.statements.map((s, i) => {
             return (
               <ListItem key={`${i}`}>
                 <ListItemText
@@ -193,7 +190,7 @@ export default function Index() {
     );
   }
 
-  if (!Cmi5.isCmiAvailable) {
+  if (!state) {
     return checkParams();
   }
 
@@ -207,7 +204,6 @@ export default function Index() {
       {activityStatus()}
       {grade()}
       {statements()}
-      <Typography></Typography>
     </div>
   );
 }

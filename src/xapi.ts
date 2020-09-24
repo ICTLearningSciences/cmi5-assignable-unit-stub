@@ -28,7 +28,6 @@ export interface FetchActivityStateParams {
 
 export interface LRS {
   fetchActivityState(params: FetchActivityStateParams): Promise<ActivityState>;
-  // fetchStatements(params: FetchStatementsParams): Promise<StatementResult>;
   saveStatements(statements: Statement[]): Promise<string[]>;
 }
 
@@ -77,49 +76,13 @@ class TinCanLRS implements LRS {
             !state
               ? {}
               : typeof state.asVersion === "function"
-              ? state.asVersion().contents
-              : state.contents
+              ? state.asVersion()
+              : state
           );
         },
       });
     });
   }
-
-  //   fetchStatements(params: FetchStatementsParams): Promise<StatementResult> {
-  //     console.log(`fetchStatements: `, params);
-  //     return new Promise((resolve, reject) => {
-  //       // TODO: need to test all the param types.
-  //       // Probably TinCan needs all type (like verb) wrapped here as TinCan.Verb etc
-  //       this._lrs.queryStatements({
-  //         params: { ...params, agent: new TinCan.Agent(params.agent) },
-  //         callback: async (err: any, sr: StatementResult) => {
-  //           if (err) {
-  //             return reject(err);
-  //           }
-  //           // TinCan likes to convert xapi json int
-  //           // instances of it's own domain-objects classes.
-  //           // Make sure we're returning pure json to avoid
-  //           // issues downstream
-  //           const result: StatementResult = {
-  //             statements: Array.isArray(sr.statements)
-  //               ? sr.statements.map((s) => {
-  //                   const sJson: Statement =
-  //                     s instanceof TinCan.Statement ? (s as any).asVersion() : s;
-  //                   if (!sJson.stored && s.stored) {
-  //                     sJson.stored = s.stored; // stupid tincan module swallows stored field
-  //                   }
-  //                   return sJson;
-  //                 })
-  //               : [],
-  //           };
-  //           if (sr.more) {
-  //             result.more = sr.more;
-  //           }
-  //           return resolve(result);
-  //         },
-  //       });
-  //     });
-  //   }
 
   saveStatements(statements: Statement[]): Promise<string[]> {
     return new Promise((resolve, reject) => {

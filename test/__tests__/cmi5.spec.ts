@@ -19,12 +19,6 @@ jest.mock("../../src/xapi");
 async function start(mockCmi5: MockCmi5Helper): Promise<Cmi5Service> {
   mockCmi5.mockLocation();
   mockCmi5.mockFetch();
-  mockCmi5.mockFetchActivityState({
-    activityId: mockCmi5.activityId,
-    agent: mockCmi5.actor,
-    registration: mockCmi5.registration,
-    stateId: STATE_LMS_LAUNCHDATA,
-  });
   const cmi5 = Cmi5.get();
   await cmi5.start();
   return cmi5;
@@ -458,6 +452,31 @@ describe("Cmi5", () => {
       } catch (e) {
         expect(e.message).toBe("not initialized");
       }
+    });
+  });
+
+  describe("onStateUpdate", () => {
+    it("calls callback functions when any state change occurs", async () => {
+      mockCmi5.mockLocation();
+      mockCmi5.mockFetch();
+      const cmi5 = Cmi5.get();
+      const cb1 = jest.fn();
+      const cb2 = jest.fn();
+      cmi5.onStateUpdate(cb1);
+      cmi5.onStateUpdate(cb2);
+      await cmi5.start();
+      expect(cb1).toHaveBeenCalled();
+      expect(cb2).toHaveBeenCalled();
+    });
+    it("unregisters callback functions", async () => {
+      mockCmi5.mockLocation();
+      mockCmi5.mockFetch();
+      const cmi5 = Cmi5.get();
+      const cb = jest.fn();
+      cmi5.onStateUpdate(cb);
+      cmi5.onStateUpdate(cb);
+      await cmi5.start();
+      expect(cb).not.toHaveBeenCalled();
     });
   });
 });

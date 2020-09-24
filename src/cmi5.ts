@@ -19,7 +19,6 @@ import {
 import axios from "axios";
 import { LRS, newLrs, ActivityState } from "./xapi";
 import moment from "moment";
-moment().format();
 
 let _url = "";
 let _cmi: Cmi5Service | null = null;
@@ -37,14 +36,13 @@ export interface Cmi5Params {
 }
 
 export interface Cmi5State {
-  statements: Statement[];
   start?: Date;
+  statements: Statement[];
   authStatus: string;
   accessToken: string;
   activityStatus: string;
   lmsLaunchData: ActivityState;
 }
-
 
 interface CmiStateUpdateCallback {
   (): void;
@@ -67,18 +65,15 @@ export interface Cmi5Service {
 }
 
 export const STATE_LMS_LAUNCHDATA = "LMS.LaunchData";
-
 export const VERB_INITIALIZED = "http://adlnet.gov/expapi/verbs/initialized";
 export const VERB_PASSED = "http://adlnet.gov/expapi/verbs/passed";
 export const VERB_COMPLETED = "http://adlnet.gov/expapi/verbs/completed";
 export const VERB_FAILED = "http://adlnet.gov/expapi/verbs/failed";
 export const VERB_TERMINATED = "http://adlnet.gov/expapi/verbs/terminated";
-
 export const AUTH_STATUS_NONE = "NONE";
 export const AUTH_STATUS_IN_PROGRESS = "IN_PROGRESS";
 export const AUTH_STATUS_SUCCESS = "SUCCESS";
 export const AUTH_STATUS_FAILED = "FAILED";
-
 export const ACTIVITY_STATUS_NONE = "NONE";
 export const ACTIVITY_STATUS_IN_PROGRESS = "LOAD_IN_PROGRESS";
 export const ACTIVITY_STATUS_SUCCESS = "LOADED";
@@ -119,7 +114,7 @@ class _CmiService implements Cmi5Service {
   readonly params: Cmi5Params;
   _state: Cmi5State;
   _lrs: LRS | null = null;
-  _onStateUpdateObservers: CmiStateUpdateCallback[] = []
+  _onStateUpdateObservers: CmiStateUpdateCallback[] = [];
 
   constructor(params: Cmi5Params) {
     this.params = params;
@@ -137,27 +132,28 @@ class _CmiService implements Cmi5Service {
     return this._state;
   }
 
-  onStateUpdate(cb: CmiStateUpdateCallback): Unregister
-  {
-    if(!this._onStateUpdateObservers.includes(cb)) {
-      this._onStateUpdateObservers.push(cb)
+  onStateUpdate(cb: CmiStateUpdateCallback): Unregister {
+    const rmIx = this._onStateUpdateObservers.indexOf(cb);
+    if (rmIx === -1) {
+      this._onStateUpdateObservers.push(cb);
+    } else {
+      this._onStateUpdateObservers.splice(rmIx, 1);
     }
-    return () => {
-      const rmIx = this._onStateUpdateObservers.indexOf(cb)
-      if(rmIx !== -1) {
-        this._onStateUpdateObservers.splice(rmIx)
-      }
-    }
+    // eslint-disable-next-line
+    return () => {};
   }
 
   updateState(s: Cmi5State): void {
     this._state = s;
+    this._onStateUpdateObservers.forEach((cb) => {
+      cb();
+    });
   }
 
   prepareActivityStatement(p: PrepareActivityStatementParams): Statement {
-    const context = this.state.lmsLaunchData
-      ? this.state.lmsLaunchData.contextTemplate || {}
-      : {};
+    const lmsData = this.state.lmsLaunchData;
+    const context =
+      lmsData && lmsData.contextTemplate ? lmsData.contextTemplate : {};
     return {
       actor: this.params.actor,
       context: {
@@ -216,6 +212,7 @@ class _CmiService implements Cmi5Service {
         success: true,
         duration: duration.toISOString(),
         score: toScore(p.score),
+        extensions: p.resultExtensions,
       },
     });
   }
@@ -237,6 +234,7 @@ class _CmiService implements Cmi5Service {
         success: false,
         duration: duration.toISOString(),
         score: toScore(p.score),
+        extensions: p.resultExtensions,
       },
     });
   }
@@ -308,6 +306,7 @@ class _CmiService implements Cmi5Service {
         }
         break;
       default:
+        await this.completed(p.contextExtensions);
     }
     await this.terminate();
   }
@@ -400,15 +399,12 @@ export class Cmi5 {
 
   static get isCmiAvailable(): boolean {
     if (Cmi5.exists) {
-      console.log("already exists");
       return true;
     }
     if (!window || typeof window !== "object") {
-      console.log("no window");
       return false;
     }
     if (!window.location || typeof window.location.search !== "string") {
-      console.log("no window");
       return false;
     }
     return hasCmi5Params(new URLSearchParams(window.location.search));

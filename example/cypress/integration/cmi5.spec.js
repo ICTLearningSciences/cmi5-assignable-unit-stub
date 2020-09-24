@@ -11,20 +11,19 @@ No Commercial Use: This software shall be used for government purposes only and 
 const DEFAULT_ACCESS_TOKEN_USERNAME = "testuser";
 const DEFAULT_ACCESS_TOKEN_PASSWORD = "testpassword";
 const DEFAULT_CMI5_PARAMS = {
-  activityId: "http://example.com/activity-id",
   actor: {
-    name: DEFAULT_ACCESS_TOKEN_USERNAME,
     objectType: "Agent",
     account: {
       homePage: "http://example.com/users",
       name: DEFAULT_ACCESS_TOKEN_PASSWORD,
     },
+    name: DEFAULT_ACCESS_TOKEN_USERNAME,
   },
-  endpoint: "http://example.com/xapi",
+  activityId: "http://example.com/activity-id",
+  endpoint: "/xapi",
   fetch: "http://example.com/fetch",
   registration: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
 };
-const DEFAULT_URL_BASE = "/";
 
 function url() {
   let url = `/?activityId=${DEFAULT_CMI5_PARAMS.activityId}`;
@@ -38,6 +37,23 @@ function url() {
 describe("Cmi5 example", () => {
   beforeEach(() => {
     cy.server();
+    cy.route("POST", "**/fetch", {
+      "auth-token": Buffer.from(`testuser:testpassword`).toString("base64"),
+    }).as("fetch");
+    cy.route("POST", `**/xapi/statements`, [
+      "8caa7d88-afa9-4de9-a7fa-aa67002bd592",
+    ]);
+    cy.route("GET", `**/xapi/activities/state/**`, {
+      contents: {
+        contextTemplate: {
+          registration: "28f5a669-31c5-4200-8e39-876c3a556de9",
+        },
+        moveOn: "CompletedOrPassed",
+        launchMode: "Normal",
+        masteryScore: 0.85,
+        returnURL: "edu.usc.ict.pal3://",
+      },
+    }).as("lms");
   });
 
   it("launched with missing cmi5 params displays which params are missing", () => {
@@ -49,15 +65,46 @@ describe("Cmi5 example", () => {
     cy.get("#cmi5-params").contains("Missing cmi5 parameter registration");
   });
 
-  it("shows auth status", () => {
-    cy.route(DEFAULT_CMI5_PARAMS.fetch, {
-      "auth-token": Buffer.from(`testuser:testpassword`).toString("base64"),
-    }).as("fetch");
-
+  it("shows cmi5 params", () => {
     cy.visit(url());
-    cy.wait("@fetch").then((xhr) => {
-      console.log(xhr);
-      cy.get("#auth").contains("Status: SUCCESS");
-    });
+    cy.get("#cmi5-params").contains(
+      'actor: {"objectType":"Agent","account":{"homePage":"http://example.com/users","name":"testpassword"},"name":"testuser"}'
+    );
+    cy.get("#cmi5-params").contains(
+      "activityId: http://example.com/activity-id"
+    );
+    cy.get("#cmi5-params").contains("endpoint: /xapi");
+    cy.get("#cmi5-params").contains("fetch: http://example.com/fetch");
+    cy.get("#cmi5-params").contains(
+      "registration: aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"
+    );
+  });
+
+  it("shows auth status", () => {
+    cy.visit(url());
+    cy.get("#auth").contains("Status: IN_PROGRESS");
+    cy.wait("@fetch");
+    cy.get("#auth").contains("Status: SUCCESS");
+    cy.get("#auth").contains("Token: dGVzdHVzZXI6dGVzdHBhc3N3b3Jk");
+  });
+
+  it("shows activity state", () => {
+    cy.visit(url());
+    cy.get("#activity").contains("Status: NONE");
+    cy.get("#activity").contains("Status: LOAD_IN_PROGRESS");
+    cy.wait("@lms");
+    cy.get("#activity").contains("Status: LOADED");
+  });
+
+  it("sends passing score", () => {
+    cy.visit(url());
+    cy.get("#pass").should("be.disabled");
+    cy.get("#score").clear().type("1");
+    cy.get("#pass").click();
+  });
+
+  it("sends failing score", () => {
+    cy.visit(url());
+    cy.get("#fail").click();
   });
 });
