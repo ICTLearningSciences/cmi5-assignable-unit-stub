@@ -151,9 +151,8 @@ class _CmiService implements Cmi5Service {
   }
 
   prepareActivityStatement(p: PrepareActivityStatementParams): Statement {
-    const lmsData = this.state.lmsLaunchData;
-    const context =
-      lmsData && lmsData.contextTemplate ? lmsData.contextTemplate : {};
+    const lmsData = this.state.lmsLaunchData.contents || {};
+    const context = lmsData.contextTemplate || {};
     return {
       actor: this.params.actor,
       context: {
@@ -273,7 +272,7 @@ class _CmiService implements Cmi5Service {
     if (!this.state.lmsLaunchData) {
       throw new Error("no LMS data");
     }
-    const lms = this.state.lmsLaunchData;
+    const lms = this.state.lmsLaunchData.contents || {};
     const masteryScore = lms.masteryScore || 0;
     const moveOn = lms.moveOn || "NotApplicable";
     const passed = p.score >= masteryScore;

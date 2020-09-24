@@ -119,10 +119,15 @@ describe("Cmi5", () => {
       });
       expect(cmi5.state.activityStatus).toBe(ACTIVITY_STATUS_SUCCESS);
       expect(cmi5.state.lmsLaunchData).toMatchObject({
-        contextTemplate: {},
-        moveOn: "CompletedAndPassed",
-        masteryScore: 0.5,
-        returnURL: "/returnUrl",
+        contents: {
+          contextTemplate: {
+            registration: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+          },
+          launchMode: "Normal",
+          moveOn: "CompletedAndPassed",
+          masteryScore: 0.5,
+          returnURL: "/returnUrl",
+        },
       });
     });
     it("posts cmi5 INITIALIZED statement", async () => {
@@ -351,10 +356,15 @@ describe("Cmi5", () => {
       const score = 0.9;
       await cmi5.moveOn({ score });
       expect(cmi5.state.lmsLaunchData).toMatchObject({
-        contextTemplate: {},
-        moveOn: "CompletedAndPassed",
-        masteryScore: 0.5,
-        returnURL: "/returnUrl",
+        contents: {
+          contextTemplate: {
+            registration: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+          },
+          launchMode: "Normal",
+          moveOn: "CompletedAndPassed",
+          masteryScore: 0.5,
+          returnURL: "/returnUrl",
+        },
       });
       expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
         expectActivityStatement(cmi5, VERB_PASSED, {
@@ -398,10 +408,15 @@ describe("Cmi5", () => {
       const score = 0.1;
       await cmi5.moveOn({ score });
       expect(cmi5.state.lmsLaunchData).toMatchObject({
-        contextTemplate: {},
-        moveOn: "CompletedAndPassed",
-        masteryScore: 0.5,
-        returnURL: "/returnUrl",
+        contents: {
+          contextTemplate: {
+            registration: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+          },
+          launchMode: "Normal",
+          moveOn: "CompletedAndPassed",
+          masteryScore: 0.5,
+          returnURL: "/returnUrl",
+        },
       });
       expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
         expectActivityStatement(cmi5, VERB_FAILED, {

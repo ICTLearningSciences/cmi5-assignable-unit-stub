@@ -108,10 +108,10 @@ export default function Index() {
     if (!state.activityStatus) {
       return;
     }
-    const lms = state.lmsLaunchData.contents;
-    const moveOn = lms ? lms.moveOn : "NotApplicable";
-    const masteryScore = lms ? lms.masteryScore : "n/a";
-    const returnURL = lms ? lms.returnURL : "n/a";
+    const lms = state.lmsLaunchData.contents || {};
+    const moveOn = lms.moveOn || "NotApplicable";
+    const masteryScore = lms.masteryScore || "n/a";
+    const returnURL = lms.returnURL || "n/a";
     return (
       <Typography id="activity" variant="h5" style={{ padding: 15 }}>
         Activity State:

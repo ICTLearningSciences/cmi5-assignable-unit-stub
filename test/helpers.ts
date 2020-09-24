@@ -107,10 +107,19 @@ export class MockCmi5Helper {
   ): Promise<xapi.ActivityState> {
     return new Promise((resolve, reject) => {
       resolve({
-        contextTemplate: {},
-        moveOn: "CompletedAndPassed",
-        masteryScore: 0.5,
-        returnURL: "/returnUrl",
+        contentType: "application/json; charset=utf-8",
+        contents: {
+          contextTemplate: {
+            registration: "aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa",
+          },
+          launchMode: "Normal",
+          moveOn: "CompletedAndPassed",
+          masteryScore: 0.5,
+          returnURL: "/returnUrl",
+        },
+        etag: '"69d97b0fce06f8fd1c25d1a4e2144138c222ed2d"',
+        id: "LMS.LaunchData",
+        updated: false,
       });
     });
   }

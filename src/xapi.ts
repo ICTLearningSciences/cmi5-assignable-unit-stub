@@ -13,7 +13,16 @@ import { InvalidXapiFormatError } from "./errors";
 const TinCan = require("tincanjs");
 
 export interface ActivityState {
+  contentType?: string;
+  contents?: ActivityContents;
+  etag?: string;
+  id?: string;
+  updated?: boolean;
+}
+
+export interface ActivityContents {
   contextTemplate?: any;
+  launchMode?: string;
   moveOn?: string;
   masteryScore?: number;
   returnURL?: string;
