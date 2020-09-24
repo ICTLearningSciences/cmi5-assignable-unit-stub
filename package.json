@@ -2,10 +2,10 @@
   "name": "react-cmi5-context",
   "version": "0.1.0",
   "description": "",
-  "main": "build/index.js",
-  "module": "build/index.es.js",
+  "main": "dist/index.js",
+  "module": "dist/index.es.js",
   "files": [
-    "build",
+    "dist",
     "lib",
     "scripts"
   ],
