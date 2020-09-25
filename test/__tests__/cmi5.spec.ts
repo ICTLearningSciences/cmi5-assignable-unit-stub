@@ -1,17 +1,16 @@
+import { Cmi5, Cmi5Service } from "../../src/cmi5";
 import {
-  Cmi5,
-  Cmi5Service,
+  AUTH_STATUS_SUCCESS,
+  AUTH_STATUS_NONE,
+  AUTH_STATUS_FAILED,
   STATE_LMS_LAUNCHDATA,
+  ACTIVITY_STATUS_SUCCESS,
   VERB_INITIALIZED,
   VERB_PASSED,
   VERB_FAILED,
   VERB_COMPLETED,
   VERB_TERMINATED,
-  AUTH_STATUS_NONE,
-  AUTH_STATUS_SUCCESS,
-  AUTH_STATUS_FAILED,
-  ACTIVITY_STATUS_SUCCESS,
-} from "../../src/cmi5";
+} from "../../src/constants";
 import { MockCmi5Helper, DEFAULT_CMI5_PARAMS } from "../helpers";
 import * as xapi from "../../src/xapi";
 jest.mock("../../src/xapi");
@@ -156,6 +155,22 @@ describe("Cmi5", () => {
       cmi5.passed({ score: score });
       expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
         expectActivityStatement(cmi5, VERB_PASSED, {
+          context: expect.objectContaining({
+            contextActivities: {
+              category: [
+                {
+                  id: "https://w3id.org/xapi/cmi5/context/categories/moveon",
+                },
+              ],
+            },
+            extensions: {
+              "https://w3id.org/xapi/cmi5/context/extensions/masteryscore": 0.5,
+            },
+          }),
+        }),
+      ]);
+      expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
+        expectActivityStatement(cmi5, VERB_PASSED, {
           result: expect.objectContaining({
             success: true,
             duration: expect.stringMatching(
@@ -200,6 +215,22 @@ describe("Cmi5", () => {
       const cmi5 = await start(mockCmi5);
       const score = 0.1;
       cmi5.failed({ score: score });
+      expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
+        expectActivityStatement(cmi5, VERB_FAILED, {
+          context: expect.objectContaining({
+            contextActivities: {
+              category: [
+                {
+                  id: "https://w3id.org/xapi/cmi5/context/categories/moveon",
+                },
+              ],
+            },
+            extensions: {
+              "https://w3id.org/xapi/cmi5/context/extensions/masteryscore": 0.5,
+            },
+          }),
+        }),
+      ]);
       expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
         expectActivityStatement(cmi5, VERB_FAILED, {
           result: expect.objectContaining({
@@ -272,14 +303,25 @@ describe("Cmi5", () => {
       cmi5.completed();
       expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
         expectActivityStatement(cmi5, VERB_COMPLETED, {
+          context: expect.objectContaining({
+            contextActivities: {
+              category: [
+                {
+                  id: "https://w3id.org/xapi/cmi5/context/categories/moveon",
+                },
+              ],
+            },
+          }),
+        }),
+      ]);
+      expect(mockCmi5.mockSaveStatements).toHaveBeenCalledWith([
+        expectActivityStatement(cmi5, VERB_COMPLETED, {
           result: expect.objectContaining({
-            success: true,
+            success: undefined,
             duration: expect.stringMatching(
               /^(-?)P(?=\d|T\d)(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)([DW]))?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+(?:\.\d+)?)S)?)?$/
             ),
-            score: expect.objectContaining({
-              scaled: 1,
-            }),
+            score: undefined,
             completion: true,
           }),
         }),

@@ -3949,130 +3949,6 @@ axios_1.default = _default;
 
 var axios$1 = axios_1;
 
-/*
-Government Purpose Rights (“GPR”)
-Contract No.  W911NF-14-D-0005
-Contractor Name:   University of Southern California
-Contractor Address:  3720 S. Flower Street, 3rd Floor, Los Angeles, CA 90089-0001
-Expiration Date:  Restrictions do not expire, GPR is perpetual
-Restrictions Notice/Marking: The Government's rights to use, modify, reproduce, release, perform, display, or disclose this software are restricted by paragraph (b)(2) of the Rights in Noncommercial Computer Software and Noncommercial Computer Software Documentation clause contained in the above identified contract.  No restrictions apply after the expiration date shown above. Any reproduction of the software or portions thereof marked with this legend must also reproduce the markings. (see: DFARS 252.227-7014(f)(2))
-No Commercial Use: This software shall be used for government purposes only and shall not, without the express written permission of the party whose name appears in the restrictive legend, be used, modified, reproduced, released, performed, or displayed for any commercial purpose or disclosed to a person other than subcontractors, suppliers, or prospective subcontractors or suppliers, who require the software to submit offers for, or perform, government contracts.  Prior to disclosing the software, the Contractor shall require the persons to whom disclosure will be made to complete and sign the non-disclosure agreement at 227.7103-7.  (see DFARS 252.227-7025(b)(2))
-*/
-var InvalidXapiFormatError = /** @class */ (function (_super) {
-  __extends(InvalidXapiFormatError, _super);
-  function InvalidXapiFormatError(message, status) {
-    if (message === void 0) {
-      message = "invalid xapi format";
-    }
-    if (status === void 0) {
-      status = 400;
-    }
-    var _this = _super.call(this, message) || this;
-    // Set the prototype explicitly.
-    Object.setPrototypeOf(_this, InvalidXapiFormatError.prototype);
-    _this.status = status;
-    return _this;
-  }
-  return InvalidXapiFormatError;
-})(Error);
-var XapiObjectNotFound = /** @class */ (function (_super) {
-  __extends(XapiObjectNotFound, _super);
-  function XapiObjectNotFound(message, status) {
-    if (message === void 0) {
-      message = "invalid xapi format";
-    }
-    if (status === void 0) {
-      status = 404;
-    }
-    var _this = _super.call(this, message) || this;
-    // Set the prototype explicitly.
-    Object.setPrototypeOf(_this, XapiObjectNotFound.prototype);
-    _this.status = status;
-    return _this;
-  }
-  return XapiObjectNotFound;
-})(Error);
-var XapiWrongUser = /** @class */ (function (_super) {
-  __extends(XapiWrongUser, _super);
-  function XapiWrongUser(message, status) {
-    if (message === void 0) {
-      message =
-        "attempt to save a record for a user different from the authorized user";
-    }
-    if (status === void 0) {
-      status = 403;
-    }
-    var _this = _super.call(this, message) || this;
-    // Set the prototype explicitly.
-    Object.setPrototypeOf(_this, XapiWrongUser.prototype);
-    _this.status = status;
-    return _this;
-  }
-  return XapiWrongUser;
-})(Error);
-
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-var TinCan = require("tincanjs");
-var TinCanLRS = /** @class */ (function () {
-  function TinCanLRS(p) {
-    this._lrs = new TinCan.LRS(__assign(__assign({}, p), { allowFail: false }));
-  }
-  TinCanLRS.prototype.fetchActivityState = function (params) {
-    var _this = this;
-    return new Promise(function (resolve, reject) {
-      _this._lrs.retrieveState(params.stateId, {
-        activity: new TinCan.Activity({
-          id: params.activityId,
-        }),
-        agent: new TinCan.Agent(params.agent),
-        registration: params.registration,
-        // eslint-disable-next-line
-        callback: function (err, state) {
-          if (err) {
-            return reject(err);
-          }
-          return resolve(
-            !state
-              ? {}
-              : typeof state.asVersion === "function"
-              ? state.asVersion()
-              : state
-          );
-        },
-      });
-    });
-  };
-  TinCanLRS.prototype.saveStatements = function (statements) {
-    var _this = this;
-    return new Promise(function (resolve, reject) {
-      var tcStatements = null;
-      try {
-        tcStatements = statements.map(function (s) {
-          return new TinCan.Statement(s);
-        });
-      } catch (err) {
-        return reject(new InvalidXapiFormatError(err.message));
-      }
-      _this._lrs.saveStatements(tcStatements, {
-        callback: function (err, xhr) {
-          if (err) {
-            return reject(err);
-          }
-          var ids =
-            typeof xhr.response === "string"
-              ? JSON.parse(xhr.response)
-              : xhr.response;
-          return resolve(ids);
-        },
-      });
-    });
-  };
-  return TinCanLRS;
-})();
-function newLrs(p) {
-  return new TinCanLRS(p);
-}
-
 var moment = createCommonjsModule(function (module, exports) {
   (function (global, factory) {
     module.exports = factory();
@@ -9732,8 +9608,145 @@ var moment = createCommonjsModule(function (module, exports) {
   });
 });
 
-var _url = "";
-var _cmi = null;
+/*
+Government Purpose Rights (“GPR”)
+Contract No.  W911NF-14-D-0005
+Contractor Name:   University of Southern California
+Contractor Address:  3720 S. Flower Street, 3rd Floor, Los Angeles, CA 90089-0001
+Expiration Date:  Restrictions do not expire, GPR is perpetual
+Restrictions Notice/Marking: The Government's rights to use, modify, reproduce, release, perform, display, or disclose this software are restricted by paragraph (b)(2) of the Rights in Noncommercial Computer Software and Noncommercial Computer Software Documentation clause contained in the above identified contract.  No restrictions apply after the expiration date shown above. Any reproduction of the software or portions thereof marked with this legend must also reproduce the markings. (see: DFARS 252.227-7014(f)(2))
+No Commercial Use: This software shall be used for government purposes only and shall not, without the express written permission of the party whose name appears in the restrictive legend, be used, modified, reproduced, released, performed, or displayed for any commercial purpose or disclosed to a person other than subcontractors, suppliers, or prospective subcontractors or suppliers, who require the software to submit offers for, or perform, government contracts.  Prior to disclosing the software, the Contractor shall require the persons to whom disclosure will be made to complete and sign the non-disclosure agreement at 227.7103-7.  (see DFARS 252.227-7025(b)(2))
+*/
+var InvalidXapiFormatError = /** @class */ (function (_super) {
+  __extends(InvalidXapiFormatError, _super);
+  function InvalidXapiFormatError(message, status) {
+    if (message === void 0) {
+      message = "invalid xapi format";
+    }
+    if (status === void 0) {
+      status = 400;
+    }
+    var _this = _super.call(this, message) || this;
+    // Set the prototype explicitly.
+    Object.setPrototypeOf(_this, InvalidXapiFormatError.prototype);
+    _this.status = status;
+    return _this;
+  }
+  return InvalidXapiFormatError;
+})(Error);
+var XapiObjectNotFound = /** @class */ (function (_super) {
+  __extends(XapiObjectNotFound, _super);
+  function XapiObjectNotFound(message, status) {
+    if (message === void 0) {
+      message = "invalid xapi format";
+    }
+    if (status === void 0) {
+      status = 404;
+    }
+    var _this = _super.call(this, message) || this;
+    // Set the prototype explicitly.
+    Object.setPrototypeOf(_this, XapiObjectNotFound.prototype);
+    _this.status = status;
+    return _this;
+  }
+  return XapiObjectNotFound;
+})(Error);
+var XapiWrongUser = /** @class */ (function (_super) {
+  __extends(XapiWrongUser, _super);
+  function XapiWrongUser(message, status) {
+    if (message === void 0) {
+      message =
+        "attempt to save a record for a user different from the authorized user";
+    }
+    if (status === void 0) {
+      status = 403;
+    }
+    var _this = _super.call(this, message) || this;
+    // Set the prototype explicitly.
+    Object.setPrototypeOf(_this, XapiWrongUser.prototype);
+    _this.status = status;
+    return _this;
+  }
+  return XapiWrongUser;
+})(Error);
+
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+var TinCan = require("tincanjs");
+var TinCanLRS = /** @class */ (function () {
+  function TinCanLRS(p) {
+    this._lrs = new TinCan.LRS(__assign(__assign({}, p), { allowFail: false }));
+  }
+  TinCanLRS.prototype.fetchActivityState = function (params) {
+    var _this = this;
+    return new Promise(function (resolve, reject) {
+      _this._lrs.retrieveState(params.stateId, {
+        activity: new TinCan.Activity({
+          id: params.activityId,
+        }),
+        agent: new TinCan.Agent(params.agent),
+        registration: params.registration,
+        // eslint-disable-next-line
+        callback: function (err, state) {
+          if (err) {
+            return reject(err);
+          }
+          return resolve(
+            !state
+              ? {}
+              : typeof state.asVersion === "function"
+              ? state.asVersion()
+              : state
+          );
+        },
+      });
+    });
+  };
+  TinCanLRS.prototype.saveStatements = function (statements) {
+    var _this = this;
+    return new Promise(function (resolve, reject) {
+      var tcStatements = null;
+      try {
+        tcStatements = statements.map(function (s) {
+          return new TinCan.Statement(s);
+        });
+      } catch (err) {
+        return reject(new InvalidXapiFormatError(err.message));
+      }
+      _this._lrs.saveStatements(tcStatements, {
+        callback: function (err, xhr) {
+          if (err) {
+            return reject(err);
+          }
+          var ids =
+            typeof xhr.response === "string"
+              ? JSON.parse(xhr.response)
+              : xhr.response;
+          return resolve(ids);
+        },
+      });
+    });
+  };
+  return TinCanLRS;
+})();
+function newLrs(p) {
+  return new TinCanLRS(p);
+}
+
+var Cmi5ContextActivity = /** @class */ (function () {
+  function Cmi5ContextActivity() {}
+  Cmi5ContextActivity.MOVE_ON = {
+    id: "https://w3id.org/xapi/cmi5/context/categories/moveon",
+  };
+  Cmi5ContextActivity.CMI5 = {
+    id: "https://w3id.org/xapi/cmi5/context/categories/cmi5",
+  };
+  Cmi5ContextActivity.MASTERY = function (mastery) {
+    return {
+      "https://w3id.org/xapi/cmi5/context/extensions/masteryscore": mastery,
+    };
+  };
+  return Cmi5ContextActivity;
+})();
 var STATE_LMS_LAUNCHDATA = "LMS.LaunchData";
 var VERB_INITIALIZED = "http://adlnet.gov/expapi/verbs/initialized";
 var VERB_PASSED = "http://adlnet.gov/expapi/verbs/passed";
@@ -9748,6 +9761,9 @@ var ACTIVITY_STATUS_NONE = "NONE";
 var ACTIVITY_STATUS_IN_PROGRESS = "LOAD_IN_PROGRESS";
 var ACTIVITY_STATUS_SUCCESS = "LOADED";
 var ACTIVITY_STATUS_FAILED = "FAILED";
+
+var _url = "";
+var _cmi = null;
 function hasCmi5Params(p) {
   return Boolean(
     // true if has all required cmi5 query params
@@ -9764,6 +9780,9 @@ function toScore(s) {
         scaled: Number(s),
       }
     : s;
+}
+function getISODuration(init) {
+  return moment.duration(new Date().getTime() - init.getTime()).toISOString();
 }
 var _CmiService = /** @class */ (function () {
   function _CmiService(params) {
@@ -9803,13 +9822,10 @@ var _CmiService = /** @class */ (function () {
     });
   };
   _CmiService.prototype.prepareActivityStatement = function (p) {
-    var lmsData = this.state.lmsLaunchData.contents || {};
-    var context = lmsData.contextTemplate || {};
     return {
       actor: this.params.actor,
-      context: __assign(__assign({}, context), {
+      context: __assign(__assign({}, p.context), {
         registration: this.params.registration,
-        extensions: p.contextExtensions,
       }),
       object: {
         id: this.params.activityId,
@@ -9874,7 +9890,7 @@ var _CmiService = /** @class */ (function () {
   };
   _CmiService.prototype.passed = function (p) {
     return __awaiter(this, void 0, void 0, function () {
-      var duration;
+      var lms;
       return __generator(this, function (_a) {
         switch (_a.label) {
           case 0:
@@ -9890,17 +9906,25 @@ var _CmiService = /** @class */ (function () {
                 "only one passed statement is allowed per registration"
               );
             }
-            duration = moment.duration(
-              new Date().getTime() - this.state.start.getTime()
-            );
+            lms = this.state.lmsLaunchData.contents || {};
             return [
               4 /*yield*/,
               this.sendActivityStatement({
                 verb: VERB_PASSED,
-                contextExtensions: p.contextExtensions,
+                context: {
+                  contextActivities: {
+                    category: [Cmi5ContextActivity.MOVE_ON],
+                  },
+                  extensions: __assign(
+                    __assign({}, p.contextExtensions),
+                    lms.masteryScore
+                      ? Cmi5ContextActivity.MASTERY(lms.masteryScore)
+                      : {}
+                  ),
+                },
                 result: {
                   success: true,
-                  duration: duration.toISOString(),
+                  duration: getISODuration(this.state.start),
                   score: toScore(p.score),
                   extensions: p.resultExtensions,
                 },
@@ -9915,7 +9939,7 @@ var _CmiService = /** @class */ (function () {
   };
   _CmiService.prototype.failed = function (p) {
     return __awaiter(this, void 0, void 0, function () {
-      var duration;
+      var lms;
       return __generator(this, function (_a) {
         switch (_a.label) {
           case 0:
@@ -9931,17 +9955,25 @@ var _CmiService = /** @class */ (function () {
                 "a failed statement must not follow a passed statement"
               );
             }
-            duration = moment.duration(
-              new Date().getTime() - this.state.start.getTime()
-            );
+            lms = this.state.lmsLaunchData.contents || {};
             return [
               4 /*yield*/,
               this.sendActivityStatement({
                 verb: VERB_FAILED,
-                contextExtensions: p.contextExtensions,
+                context: {
+                  contextActivities: {
+                    category: [Cmi5ContextActivity.MOVE_ON],
+                  },
+                  extensions: __assign(
+                    __assign({}, p.contextExtensions),
+                    lms.masteryScore
+                      ? Cmi5ContextActivity.MASTERY(lms.masteryScore)
+                      : {}
+                  ),
+                },
                 result: {
                   success: false,
-                  duration: duration.toISOString(),
+                  duration: getISODuration(this.state.start),
                   score: toScore(p.score),
                   extensions: p.resultExtensions,
                 },
@@ -9957,7 +9989,7 @@ var _CmiService = /** @class */ (function () {
   _CmiService.prototype.completed = function (extensions) {
     var _a;
     return __awaiter(this, void 0, void 0, function () {
-      var duration, s;
+      var s;
       return __generator(this, function (_b) {
         switch (_b.label) {
           case 0:
@@ -9973,9 +10005,6 @@ var _CmiService = /** @class */ (function () {
                 "only one completed statement is allowed per registration"
               );
             }
-            duration = moment.duration(
-              new Date().getTime() - this.state.start.getTime()
-            );
             s = this.state.statements.find(function (s) {
               return s.verb.id === VERB_PASSED || s.verb.id === VERB_FAILED;
             });
@@ -9984,14 +10013,20 @@ var _CmiService = /** @class */ (function () {
               this.sendActivityStatement(
                 __assign(__assign({}, extensions), {
                   verb: VERB_COMPLETED,
+                  context: {
+                    contextActivities: {
+                      category: [Cmi5ContextActivity.MOVE_ON],
+                    },
+                    extensions: __assign({}, extensions),
+                  },
                   result: {
-                    success: s ? s.verb.id === VERB_PASSED : true,
-                    duration: duration.toISOString(),
+                    success: s ? s.verb.id === VERB_PASSED : undefined,
+                    duration: getISODuration(this.state.start),
                     score: s
                       ? (_a = s.result) === null || _a === void 0
                         ? void 0
                         : _a.score
-                      : { scaled: 1 },
+                      : undefined,
                     completion: true,
                   },
                 })
@@ -10091,7 +10126,6 @@ var _CmiService = /** @class */ (function () {
   };
   _CmiService.prototype.terminate = function () {
     return __awaiter(this, void 0, void 0, function () {
-      var duration;
       return __generator(this, function (_a) {
         switch (_a.label) {
           case 0:
@@ -10105,14 +10139,11 @@ var _CmiService = /** @class */ (function () {
             ) {
               return [2 /*return*/];
             }
-            duration = moment.duration(
-              new Date().getTime() - this.state.start.getTime()
-            );
             return [
               4 /*yield*/,
               this.sendActivityStatement({
                 verb: VERB_TERMINATED,
-                result: { duration: duration.toISOString() },
+                result: { duration: getISODuration(this.state.start) },
               }),
             ];
           case 1:
@@ -10171,10 +10202,6 @@ var _CmiService = /** @class */ (function () {
       });
     });
   };
-  /**
-   * Method to load the LMS.LaunchData state document populated by the LMS
-   * Fetch data has to have already been loaded, in order to have LRS credential.
-   */
   _CmiService.prototype._loadLMSLaunchData = function () {
     var _a;
     return __awaiter(this, void 0, void 0, function () {

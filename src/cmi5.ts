@@ -12,13 +12,31 @@ import {
   Agent,
   Extensions,
   Result,
+  Context,
   Statement,
   Score,
   Verb,
 } from "@gradiant/xapi-dsl";
 import axios from "axios";
-import { LRS, newLrs, ActivityState } from "./xapi";
 import moment from "moment";
+import { LRS, newLrs, ActivityState } from "./xapi";
+import {
+  AUTH_STATUS_NONE,
+  ACTIVITY_STATUS_NONE,
+  VERB_INITIALIZED,
+  VERB_PASSED,
+  VERB_FAILED,
+  VERB_COMPLETED,
+  VERB_TERMINATED,
+  AUTH_STATUS_IN_PROGRESS,
+  AUTH_STATUS_FAILED,
+  AUTH_STATUS_SUCCESS,
+  ACTIVITY_STATUS_IN_PROGRESS,
+  STATE_LMS_LAUNCHDATA,
+  ACTIVITY_STATUS_FAILED,
+  ACTIVITY_STATUS_SUCCESS,
+  Cmi5ContextActivity,
+} from "./constants";
 
 let _url = "";
 let _cmi: Cmi5Service | null = null;
@@ -64,21 +82,6 @@ export interface Cmi5Service {
   readonly terminate: () => Promise<void>;
 }
 
-export const STATE_LMS_LAUNCHDATA = "LMS.LaunchData";
-export const VERB_INITIALIZED = "http://adlnet.gov/expapi/verbs/initialized";
-export const VERB_PASSED = "http://adlnet.gov/expapi/verbs/passed";
-export const VERB_COMPLETED = "http://adlnet.gov/expapi/verbs/completed";
-export const VERB_FAILED = "http://adlnet.gov/expapi/verbs/failed";
-export const VERB_TERMINATED = "http://adlnet.gov/expapi/verbs/terminated";
-export const AUTH_STATUS_NONE = "NONE";
-export const AUTH_STATUS_IN_PROGRESS = "IN_PROGRESS";
-export const AUTH_STATUS_SUCCESS = "SUCCESS";
-export const AUTH_STATUS_FAILED = "FAILED";
-export const ACTIVITY_STATUS_NONE = "NONE";
-export const ACTIVITY_STATUS_IN_PROGRESS = "LOAD_IN_PROGRESS";
-export const ACTIVITY_STATUS_SUCCESS = "LOADED";
-export const ACTIVITY_STATUS_FAILED = "FAILED";
-
 interface PassedParams {
   score: number | Score;
   contextExtensions?: Extensions;
@@ -88,7 +91,7 @@ interface PassedParams {
 interface PrepareActivityStatementParams {
   verb: string;
   result?: Result;
-  contextExtensions?: Extensions;
+  context?: Context;
 }
 
 function hasCmi5Params(p: URLSearchParams): boolean {
@@ -108,6 +111,10 @@ function toScore(s: number | Score): Score {
         scaled: Number(s),
       }
     : (s as Score);
+}
+
+function getISODuration(init: Date): string {
+  return moment.duration(new Date().getTime() - init.getTime()).toISOString();
 }
 
 class _CmiService implements Cmi5Service {
@@ -151,14 +158,11 @@ class _CmiService implements Cmi5Service {
   }
 
   prepareActivityStatement(p: PrepareActivityStatementParams): Statement {
-    const lmsData = this.state.lmsLaunchData.contents || {};
-    const context = lmsData.contextTemplate || {};
     return {
       actor: this.params.actor,
       context: {
-        ...context,
+        ...p.context,
         registration: this.params.registration,
-        extensions: p.contextExtensions,
       },
       object: {
         id: this.params.activityId,
@@ -201,15 +205,23 @@ class _CmiService implements Cmi5Service {
     if (this.state.statements.find((s) => s.verb.id === VERB_PASSED)) {
       throw new Error("only one passed statement is allowed per registration");
     }
-    const duration = moment.duration(
-      new Date().getTime() - this.state.start.getTime()
-    );
+    const lms = this.state.lmsLaunchData.contents || {};
     await this.sendActivityStatement({
       verb: VERB_PASSED,
-      contextExtensions: p.contextExtensions,
+      context: {
+        contextActivities: {
+          category: [Cmi5ContextActivity.MOVE_ON],
+        },
+        extensions: {
+          ...p.contextExtensions,
+          ...(lms.masteryScore
+            ? Cmi5ContextActivity.MASTERY(lms.masteryScore)
+            : {}),
+        },
+      },
       result: {
         success: true,
-        duration: duration.toISOString(),
+        duration: getISODuration(this.state.start),
         score: toScore(p.score),
         extensions: p.resultExtensions,
       },
@@ -223,15 +235,23 @@ class _CmiService implements Cmi5Service {
     if (this.state.statements.find((s) => s.verb.id === VERB_PASSED)) {
       throw new Error("a failed statement must not follow a passed statement");
     }
-    const duration = moment.duration(
-      new Date().getTime() - this.state.start.getTime()
-    );
+    const lms = this.state.lmsLaunchData.contents || {};
     await this.sendActivityStatement({
       verb: VERB_FAILED,
-      contextExtensions: p.contextExtensions,
+      context: {
+        contextActivities: {
+          category: [Cmi5ContextActivity.MOVE_ON],
+        },
+        extensions: {
+          ...p.contextExtensions,
+          ...(lms.masteryScore
+            ? Cmi5ContextActivity.MASTERY(lms.masteryScore)
+            : {}),
+        },
+      },
       result: {
         success: false,
-        duration: duration.toISOString(),
+        duration: getISODuration(this.state.start),
         score: toScore(p.score),
         extensions: p.resultExtensions,
       },
@@ -247,19 +267,24 @@ class _CmiService implements Cmi5Service {
         "only one completed statement is allowed per registration"
       );
     }
-    const duration = moment.duration(
-      new Date().getTime() - this.state.start.getTime()
-    );
     const s = this.state.statements.find(
       (s) => s.verb.id === VERB_PASSED || s.verb.id === VERB_FAILED
     );
     await this.sendActivityStatement({
       ...extensions,
       verb: VERB_COMPLETED,
+      context: {
+        contextActivities: {
+          category: [Cmi5ContextActivity.MOVE_ON],
+        },
+        extensions: {
+          ...extensions,
+        },
+      },
       result: {
-        success: s ? s.verb.id === VERB_PASSED : true,
-        duration: duration.toISOString(),
-        score: s ? s.result?.score : { scaled: 1 },
+        success: s ? s.verb.id === VERB_PASSED : undefined,
+        duration: getISODuration(this.state.start),
+        score: s ? s.result?.score : undefined,
         completion: true,
       },
     });
@@ -317,12 +342,9 @@ class _CmiService implements Cmi5Service {
     if (this.state.statements.find((s) => s.verb.id === VERB_TERMINATED)) {
       return;
     }
-    const duration = moment.duration(
-      new Date().getTime() - this.state.start.getTime()
-    );
     await this.sendActivityStatement({
       verb: VERB_TERMINATED,
-      result: { duration: duration.toISOString() },
+      result: { duration: getISODuration(this.state.start) },
     });
   }
 
@@ -357,10 +379,6 @@ class _CmiService implements Cmi5Service {
     });
   }
 
-  /**
-   * Method to load the LMS.LaunchData state document populated by the LMS
-   * Fetch data has to have already been loaded, in order to have LRS credential.
-   */
   async _loadLMSLaunchData(): Promise<void> {
     if (!this.state.accessToken) {
       throw new Error("fetch data LRS credential was not loaded");
