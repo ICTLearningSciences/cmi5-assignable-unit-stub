@@ -1,27 +1,22 @@
-# react-cmi5-example
+# cmi5-assignable-unit-stub
 
-An example CMI5 assignable unit that connects to an LMS (the XAPI backend of an LMS) and reads/writes an xapi statement
+A web-app that functions as a stub/test cmi5 [Assignable Unit](https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#41-assignable-unit-au) for your xapi/cmi5-compliant Learning Management System.
 
-## USAGE
+## What is Cmi5?
 
-For a quick test, run the following from the root of the react-cmi5 project:
+If you're building a Learning Management System (LMS) you probably need a way to launch Assignable Units (AU) and have the launched AU send back scores etc. CMI5 is a standard within the broader XAPI spec for managing that runtime communication between an LMS and a launched AU.
 
-...the command below will install react-cmi5 and build latest version for use in example
+## Why do I need this stub?
 
-```
-make clean
-make build
-```
+If you're building either an LMS or AU content, it's handy to have a drop in AU that lets you confirm that CMI5 integration is working properly and quickly diagnose any problems should they arise.
 
-...and then
+## How do I use this stub to test my LMS?
 
-```
-cd example && npm install && gatsby develop
-```
+You don't need to clone or build this stub yourself, we have it hosted for you here: https://cmi5-au-stub.pal3.org/
 
-The above starts React, but you need to adjust the example url to include valid cmi5 query params for an example user and activityId. The url below should be valid (unless the access_token for the user expired)
+## Launching the Stub
 
-To satisfy the cmi5 protocol, you will need the following params
+To satisfy the cmi5 protocol, your LMS should launch this stub (or any AU) with the following params
 
 - `fetch`: a url to retrieve an access token for your XAPI server
 - `endpoint`: the root endpoint for your XAPI server
@@ -31,8 +26,29 @@ To satisfy the cmi5 protocol, you will need the following params
 
 Details for the above are here in the cmi5 spec [here](https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#81-launch-method)
 
-For reference, the below is what an example url might look like
+## Creating your own Assignable Unit
 
-```
-http://localhost:8000/?fetch=http://qa-pal.ict.usc.edu/api/1.0/cmi5/accesstoken2basictoken?access_token=41c847e0-fccd-11e8-8b7f-cf001aed3365&endpoint=http://qa-pal.ict.usc.edu/api/1.0/cmi5/&activityId=http://pal.ict.usc.edu/lessons/cmi5-ex1&registration=957f56b7-1d34-4b01-9408-3ffeb2053b28&actor=%7B%22objectType%22:%20%22Agent%22,%22name%22:%20%22taflearner1%22,%22account%22:%20%7B%22homePage%22:%20%22http://pal.ict.usc.edu/xapi/users%22,%22name%22:%20%225c0eec7993c7cf001aed3365%22%7D%7D
-```
+This stub is using the [@xapi/cmi5](https://www.npmjs.com/package/@xapi/cmi5) library to implement the cmi5 protocol, and you can refer to that module for usage docs.
+
+At the simplest level though, this would be an example of how to make a `react` app function as a CMI5 AU:
+
+- Install the cmi5 lib
+
+> ```bash
+> npm install --save @xapi/cmi5
+> ```
+
+- As early as possible, initialize cmi5
+
+> ```typescript
+> import Cmi5 from '@xapi/cmi5';
+> // NOTE: have PR open to change the below to singleton access, e.g. Cmi5.get().initialize();
+> const cmi5 = new Cmi5();
+> cmi5.initialize();
+> ```
+
+- When the lesson is done, send a score
+> ```typescript
+> // NOTE: have PR open to change the below to singleton access, e.g. Cmi5.get().moveOn(0.9);
+> cmi5.moveOn(0.9);
+> ```

@@ -9,7 +9,7 @@ Restrictions Notice/Marking: The Government's rights to use, modify, reproduce, 
 No Commercial Use: This software shall be used for government purposes only and shall not, without the express written permission of the party whose name appears in the restrictive legend, be used, modified, reproduced, released, performed, or displayed for any commercial purpose or disclosed to a person other than subcontractors, suppliers, or prospective subcontractors or suppliers, who require the software to submit offers for, or perform, government contracts.  Prior to disclosing the software, the Contractor shall require the persons to whom disclosure will be made to complete and sign the non-disclosure agreement at 227.7103-7.  (see DFARS 252.227-7025(b)(2))
 */
 module.exports = {
-  pathPrefix: `/cmi5`,
+  pathPrefix: process.env.GATSBY_PATH_PREFIX || "",
   siteMetadata: {
     title: `React CMI5 Context Example`,
     description: ``,
@@ -29,6 +29,13 @@ module.exports = {
     },
     {
       resolve: "gatsby-plugin-material-ui",
+    },
+    {
+      resolve: `gatsby-plugin-s3`,
+      options: {
+        bucketName: process.env.AWS_BUCKET_NAME || "cmi5-assignable-unit-stub",
+        acl: null,
+      },
     },
   ],
 };
