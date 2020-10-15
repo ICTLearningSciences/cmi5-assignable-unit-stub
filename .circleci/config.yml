@@ -31,6 +31,16 @@ commands:
           name: npm ci
           command: npm ci
 jobs:
+  deploy:
+    executor: node
+    steps:
+      - ensure-installed
+      - run:
+          name: Gatsby build
+          command: npm run build
+      - run:
+          name: Deploy to S3
+          command: npm run deploy
   install-and-cache:
     executor: node
     steps:
@@ -80,7 +90,7 @@ jobs:
           command: npx cypress run
 workflows:
   version: 2
-  test:
+  test-and-deploy:
     jobs:
       - install-and-cache
       - test:
@@ -89,3 +99,20 @@ workflows:
       - test-cypress:
           requires:
             - install-and-cache
+      - deploy:
+          name: deploy-release
+          requires:
+            - test
+            - test-cypress
+          filters: *only-tagged-releases
+      - approve-deploy-commit:
+          type: approval
+          requires:
+            - test
+            - test-cypress
+          filters: *only-untagged
+      - deploy:
+          name: deploy-commit
+          requires:
+            - approve-deploy-commit
+          filters: *only-untagged

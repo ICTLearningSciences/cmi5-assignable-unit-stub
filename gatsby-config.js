@@ -30,5 +30,12 @@ module.exports = {
     {
       resolve: "gatsby-plugin-material-ui",
     },
+    {
+      resolve: `gatsby-plugin-s3`,
+      options: {
+        bucketName: process.env.AWS_BUCKET_NAME || "cmi5-assignable-unit-stub",
+        acl: null,
+      },
+    },
   ],
 };
