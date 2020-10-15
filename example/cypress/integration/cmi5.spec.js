@@ -80,31 +80,31 @@ describe("Cmi5 example", () => {
     );
   });
 
-  it("shows auth status", () => {
-    cy.visit(url());
-    cy.get("#auth").contains("Status: IN_PROGRESS");
-    cy.wait("@fetch");
-    cy.get("#auth").contains("Status: SUCCESS");
-    cy.get("#auth").contains("Token: dGVzdHVzZXI6dGVzdHBhc3N3b3Jk");
-  });
+  // it("shows auth status", () => {
+  //   cy.visit(url());
+  //   cy.get("#auth").contains("Status: IN_PROGRESS");
+  //   cy.wait("@fetch");
+  //   cy.get("#auth").contains("Status: SUCCESS");
+  //   cy.get("#auth").contains("Token: dGVzdHVzZXI6dGVzdHBhc3N3b3Jk");
+  // });
 
-  it("shows activity state", () => {
-    cy.visit(url());
-    cy.get("#activity").contains("Status: NONE");
-    cy.get("#activity").contains("Status: LOAD_IN_PROGRESS");
-    cy.wait("@lms");
-    cy.get("#activity").contains("Status: LOADED");
-  });
+  // it("shows activity state", () => {
+  //   cy.visit(url());
+  //   cy.get("#activity").contains("Status: NONE");
+  //   cy.get("#activity").contains("Status: LOAD_IN_PROGRESS");
+  //   cy.wait("@lms");
+  //   cy.get("#activity").contains("Status: LOADED");
+  // });
 
-  it("sends passing score", () => {
-    cy.visit(url());
-    cy.get("#pass").should("be.disabled");
-    cy.get("#score").clear().type("1");
-    cy.get("#pass").click();
-  });
+  // it("sends passing score", () => {
+  //   cy.visit(url());
+  //   cy.get("#pass").should("be.disabled");
+  //   cy.get("#score").clear().type("1");
+  //   cy.get("#pass").click();
+  // });
 
-  it("sends failing score", () => {
-    cy.visit(url());
-    cy.get("#fail").click();
-  });
+  // it("sends failing score", () => {
+  //   cy.visit(url());
+  //   cy.get("#fail").click();
+  // });
 });
