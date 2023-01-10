@@ -1,95 +1,54 @@
-# react-cmi5-context
-React wrapper component for an xapi/cmi5 assignable unit @see https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#au_requirements
+# cmi5-assignable-unit-stub
 
-## Integration in a React App
+A web-app that functions as a stub/test cmi5 [Assignable Unit](https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#41-assignable-unit-au) for your xapi/cmi5-compliant Learning Management System.
 
-To integrate this cmi5 implementation in a React app, you can use these steps:
+## What is Cmi5?
 
-#### Install react-cmi5-context
+If you're building a Learning Management System (LMS) you probably need a way to launch Assignable Units (AU) and have the launched AU send back scores etc. CMI5 is a standard within the broader XAPI spec for managing that runtime communication between an LMS and a launched AU.
 
-```
-npm install --save react-cmi5-context
-```
+## Why do I need this stub?
 
-#### Include the cmi5.js lib
+If you're building either an LMS or AU content, it's handy to have a drop in AU that lets you confirm that CMI5 integration is working properly and quickly diagnose any problems should they arise.
 
-`npm install react-cmi5-context` will have copied `cmi5.js` to the `public` folder at the root of your React project.
+## How do I use this stub to test my LMS?
 
-You must include ```cmi5.js``` in your ```index.html```, e.g.
+You don't need to clone or build this stub yourself, we have it hosted for you here: https://cmi5-au-stub.pal3.org/
 
-```html
-<head>
-  <script src="%PUBLIC_URL%/cmi5.js"></script>
-  <!--
-    Notice the use of %PUBLIC_URL% in the tags above.
-    It will be replaced with the URL of the `public` folder during the build.
-    Only files inside the `public` folder can be referenced from the HTML.
+## Launching the Stub
 
-    Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-    work correctly both with client-side routing and a non-root public URL.
-    Learn how to configure a non-root public URL by running `npm run build`.
-  -->
-</head>
-```
+To satisfy the cmi5 protocol, your LMS should launch this stub (or any AU) with the following params
 
-NOTE: the reason this is included as a downloadable script instead of a normal node package dependency is because that is how the cmi5.js lib is currently distributed (already bundled code). In a future release it would be good to tease apart the cmi5.js contents into npm packages and remove the need for the script-tag include.
+- `fetch`: a url to retrieve an access token for your XAPI server
+- `endpoint`: the root endpoint for your XAPI server
+- `activityId`: IRI/id for the XAPI object this assignable unit represents (callbacks to 'passed', 'failed' etc. will use this activity id)
+- `registration`: basically an XAPI session id
+- `actor`: account for which results will be applied (passed as a json XAPI actor object)
 
-#### Wrap a Question with Component Cmi5AssignableUnit
+Details for the above are here in the cmi5 spec [here](https://github.com/AICC/CMI-5_Spec_Current/blob/quartz/cmi5_spec.md#81-launch-method)
 
-Include the ```Cmi5AU``` React component in your src and wrap use it to wrap a question, e.g.
+## Creating your own Assignable Unit
 
-```jsx
-import React, { Component } from 'react';
-import './App.css';
-import Cmi5AU from 'react-cmi5-context';
-import ExampleQuestion from './ExampleQuestion';
+This stub is using the [@xapi/cmi5](https://www.npmjs.com/package/@xapi/cmi5) library to implement the cmi5 protocol, and you can refer to that module for usage docs.
 
-class App extends Component {
-  render() {
-    return (
-      <div className="App">
-        <Cmi5AU>
-          <ExampleQuestion/>
-        </Cmi5AU>
-      </div>
-    )
-  }
-}
+At the simplest level though, this would be an example of how to make a `react` app function as a CMI5 AU:
 
-export default App;
-```
+- Install the cmi5 lib
 
-...then in your question component when you're ready to submit a result, call one of the injected property functions `passed` or `failed`, e.g.
+> ```bash
+> npm install --save @xapi/cmi5
+> ```
 
-```jsx
-import React, { Component } from 'react';
+- As early as possible, initialize cmi5
 
-export default class ExampleQuestion extends Component {
-  render()
-  {
-    // props includes special actions for passed({score:1.0}) and failed({score: 0.0 })
-    // These are wrappers for cmi.passed and cmi.failed
-    // that make sure cmi has initialized before score is actually sent
-    const {passed, failed} = this.props
+> ```typescript
+> import Cmi5 from '@xapi/cmi5';
+> // NOTE: have PR open to change the below to singleton access, e.g. Cmi5.get().initialize();
+> const cmi5 = new Cmi5();
+> cmi5.initialize();
+> ```
 
-    const onSubmit = () => {
-      const score = this.state.score // score was set when user chose a radio-button answer
-      if(score > 0) {
-        this.props.passed(score)
-      }
-      else {
-        this.props.failed(score)
-      }
-      this.props.terminate() // MUST call terminate to end the session
-    }
-
-    return (
-      <div>
-        question form here
-        <button onClick={onSubmit}>submit</button>
-      </div>
-    )
-   }
- }
-
-```
+- When the lesson is done, send a score
+> ```typescript
+> // NOTE: have PR open to change the below to singleton access, e.g. Cmi5.get().moveOn(0.9);
+> cmi5.moveOn(0.9);
+> ```

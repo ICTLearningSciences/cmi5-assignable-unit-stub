@@ -9,34 +9,40 @@ Restrictions Notice/Marking: The Government's rights to use, modify, reproduce, 
 No Commercial Use: This software shall be used for government purposes only and shall not, without the express written permission of the party whose name appears in the restrictive legend, be used, modified, reproduced, released, performed, or displayed for any commercial purpose or disclosed to a person other than subcontractors, suppliers, or prospective subcontractors or suppliers, who require the software to submit offers for, or perform, government contracts.  Prior to disclosing the software, the Contractor shall require the persons to whom disclosure will be made to complete and sign the non-disclosure agreement at 227.7103-7.  (see DFARS 252.227-7025(b)(2))
 */
 import React, { useEffect, useState } from "react";
-import Helmet from "react-helmet";
 import {
   Button,
-  List,
-  ListItem,
-  ListItemText,
+  // List,
+  // ListItem,
+  // ListItemText,
   TextField,
   Typography,
 } from "@material-ui/core";
-import { Cmi5 } from "react-cmi5-context";
+// import { Cmi5 } from "react-cmi5-context";
+import Cmi5 from "@xapi/cmi5";
 
-export default function Index() {
+let cmi5: Cmi5;
+
+export const Index: React.FC = () => {
   const [score, setScore] = useState(0);
-  const [state, setState] = useState();
+  const [initialized, setInitialized] = useState(false);
+  const [launchData, setLaunchData] = useState();
+  // const [state, setState] = useState();
 
   useEffect(() => {
     try {
-      const cmi5 = Cmi5.get();
-      cmi5.onStateUpdate(() => {
-        setState(Cmi5.get().state);
+      // cmi5.onStateUpdate(() => {
+      //   setState(Cmi5.get().state);
+      // });
+      cmi5 = new Cmi5();
+      cmi5.initialize().then(() => {
+        setInitialized(true);
       });
-      cmi5.start();
     } catch (e) {
       console.error(e);
     }
   }, []);
 
-  function onInput(e) {
+  function onInput(e: React.BaseSyntheticEvent) {
     if (isNaN(e.target.value)) {
       return;
     }
@@ -47,21 +53,20 @@ export default function Index() {
   }
 
   function onMoveOn() {
-    Cmi5.get().moveOn({ score });
+    throw new Error("move on not implemented");
+    // Cmi5.get().moveOn({ score });
   }
 
-  function onPass() {
-    const cmi5 = Cmi5.get();
-    cmi5.passed({ score });
-    cmi5.completed();
-    cmi5.terminate();
+  async function onPass() {
+    await cmi5.pass(score);
+    await cmi5.complete();
+    await cmi5.terminate();
   }
 
-  function onFail() {
-    const cmi5 = Cmi5.get();
-    cmi5.failed({ score });
-    cmi5.completed();
-    cmi5.terminate();
+  async function onFail() {
+    await cmi5.fail(score);
+    await cmi5.complete();
+    await cmi5.terminate();
   }
 
   function cmiParam(search: URLSearchParams, p: string) {
@@ -91,31 +96,40 @@ export default function Index() {
     );
   }
 
-  function authStatus() {
-    if (!state.authStatus) {
-      return;
-    }
+  function authStatus(): JSX.Element {
     return (
       <Typography id="auth" variant="h5" style={{ padding: 15 }}>
         Auth
-        <Typography>Status: {state.authStatus}</Typography>
-        <Typography>Token: {state.accessToken}</Typography>
+        <Typography>
+          Status:{" "}
+          {cmi5
+            ? cmi5.isAuthenticated
+              ? "Authorized"
+              : "Not Authorized"
+            : "initializing cmi5..."}
+        </Typography>
+        {/* <Typography>Token: {state.accessToken}</Typography> */}
       </Typography>
     );
   }
 
-  function activityStatus() {
-    if (!state.activityStatus) {
-      return;
+  function activityStatus(): JSX.Element {
+    if (!cmi5?.isAuthenticated) {
+      return (
+        <Typography id="activity" variant="h5" style={{ padding: 15 }}>
+          Activity State:
+          <Typography>Status: initializing cmi5...</Typography>
+        </Typography>
+      );
     }
-    const lms = state.lmsLaunchData.contents || {};
+    const lms = cmi5.getLaunchData() || {};
     const moveOn = lms.moveOn || "NotApplicable";
     const masteryScore = lms.masteryScore || "n/a";
     const returnURL = lms.returnURL || "n/a";
     return (
       <Typography id="activity" variant="h5" style={{ padding: 15 }}>
         Activity State:
-        <Typography>Status: {state.activityStatus}</Typography>
+        {/* <Typography>Status: {state.activityStatus}</Typography> */}
         <Typography>moveOn: {moveOn}</Typography>
         <Typography>masteryScore: {masteryScore}</Typography>
         <Typography>returnURL: {returnURL}</Typography>
@@ -123,12 +137,12 @@ export default function Index() {
     );
   }
 
-  function grade() {
-    if (!state.start) {
-      return;
+  function grade(): JSX.Element {
+    if (!cmi5?.isAuthenticated) {
+      return <div></div>;
     }
-    const started = state.start.toISOString();
-    const lms = state.lmsLaunchData.contents || {};
+    // const started = cmi5.get.start.toISOString();
+    const lms = cmi5.getLaunchData();
     const mastery: number = lms.masteryScore || 0;
     const moveOn: string = lms.moveOn || "NotApplicable";
 
@@ -162,48 +176,43 @@ export default function Index() {
         >
           Fail
         </Button>
-        <Typography>Started: {started}</Typography>
+        {/* <Typography>Started: {cmi5.isAuthenticated}</Typography> */}
       </div>
     );
   }
 
-  function statements() {
-    if (!state.statements) {
-      return;
-    }
-    return (
-      <Typography id="statements" variant="h5" style={{ padding: 15 }}>
-        Statements:
-        <List>
-          {state.statements.map((s, i) => {
-            return (
-              <ListItem key={`${i}`}>
-                <ListItemText
-                  primary={`VERB: ${s.verb.id}`}
-                  secondary={`RESULT: ${JSON.stringify(s.result)}`}
-                />
-              </ListItem>
-            );
-          })}
-        </List>
-      </Typography>
-    );
-  }
-
-  if (!state) {
-    return checkParams();
-  }
+  // function statements() {
+  //   if (!state.statements) {
+  //     return;
+  //   }
+  //   return (
+  //     <Typography id="statements" variant="h5" style={{ padding: 15 }}>
+  //       Statements:
+  //       <List>
+  //         {state.statements.map((s, i) => {
+  //           return (
+  //             <ListItem key={`${i}`}>
+  //               <ListItemText
+  //                 primary={`VERB: ${s.verb.id}`}
+  //                 secondary={`RESULT: ${JSON.stringify(s.result)}`}
+  //               />
+  //             </ListItem>
+  //           );
+  //         })}
+  //       </List>
+  //     </Typography>
+  //   );
+  // }
 
   return (
     <div>
-      <Helmet>
-        <script src={"cmi5.js"} type="text/javascript" />
-      </Helmet>
       {checkParams()}
       {authStatus()}
       {activityStatus()}
       {grade()}
-      {statements()}
+      {/* {statements()} */}
     </div>
   );
-}
+};
+
+export default Index;
